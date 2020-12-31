@@ -54,6 +54,27 @@ func CreateSignature(method string,  url string, ts int, nounce string, body []b
 	return
 }
 
+// 验证API返回和回调header中的微信签名
+func VerifyWechatSignature(ts string, nonce string, body []byte, b64Sig string, pub *rsa.PublicKey) (pass bool) {
+	// 签名前的字符串
+	sBeforeSign := strings.Join([]string{ts, nonce, string(body)}, "\n") + "\n"
+	signature, err := base64.StdEncoding.DecodeString(b64Sig)
+	if err != nil {
+		pass = false
+		return
+	}
+	// 对签名字符串进行hash
+	h := sha256.New()
+	h.Write([]byte(sBeforeSign))
+	hashed := h.Sum(nil)
+	verifyErr := rsa.VerifyPKCS1v15(pub, crypto.SHA256, hashed, signature)
+	if verifyErr != nil {
+		pass = false
+		return
+	}
+	pass = true
+	return
+}
 
 // 用于平台证书解密和回调报文的解密
 func decryptCiphertext(associatedData string, nonce string, ciphertext string, apiSecret string) (plaintext []byte){
