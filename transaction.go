@@ -176,7 +176,7 @@ type QueryPayResultResponse struct {
 		DeviceID string `json:"device_id"`
 	} `json:"scene_info"`
 	// 优惠功能
-	Detail struct{
+	PromotionDetail struct{
 		// 券ID
 		CouponID string `json:"coupon_id"`
 		// 优惠名称

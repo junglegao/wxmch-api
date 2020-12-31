@@ -56,7 +56,7 @@ func CreateSignature(method string,  url string, ts int, nounce string, body []b
 
 
 // 用于平台证书解密和回调报文的解密
-func DecryptToString(associatedData string, nonce string, ciphertext string, apiSecret string) (s string){
+func decryptCiphertext(associatedData string, nonce string, ciphertext string, apiSecret string) (plaintext []byte){
 	ct, _ := base64.StdEncoding.DecodeString(ciphertext)
 	nc := []byte(nonce)
 	block, err := aes.NewCipher([]byte(apiSecret))
@@ -69,12 +69,10 @@ func DecryptToString(associatedData string, nonce string, ciphertext string, api
 		panic(err.Error())
 	}
 
-	plaintext, err := aesgcm.Open(nil, nc, ct, []byte(associatedData))
+	plaintext, err = aesgcm.Open(nil, nc, ct, []byte(associatedData))
 	if err != nil {
 		panic(err.Error())
 	}
-
-	s = string(plaintext)
 	return
 }
 
