@@ -232,3 +232,64 @@ func (c MerchantApiClient) ProfitReturnQuery(req ProfitReturnQueryRequest) (resp
 	err = json.Unmarshal([]byte(res), &resp)
 	return
 }
+
+// 查询订单剩余待分账金额参数
+type ProfitShareUnSplitAmountQueryRequest struct {
+	// 微信订单号
+	TransactionID string `json:"transaction_id"`
+}
+
+// 查询订单剩余待分账金额返回
+type ProfitShareUnSplitAmountQueryResponse struct {
+	// 微信订单号
+	TransactionID string `json:"transaction_id"`
+	// 订单剩余待分金额
+	UnSplitAmount uint `json:"unsplit_amount"`
+}
+
+// 查询订单剩余待分金额API
+func (c MerchantApiClient) ProfitShareUnSplitAmountQuery(req ProfitShareUnSplitAmountQueryRequest) (resp *ProfitShareUnSplitAmountQueryResponse, err error) {
+	url := fmt.Sprintf("/v3/ecommerce/profitsharing/orders/%s/amounts", req.TransactionID)
+	res, err := c.doRequest(context.Background(), "GET", url, "query", nil)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal([]byte(res), &resp)
+	return
+}
+
+// 完结分账参数
+type ProfitShareFinishRequest struct {
+	// 二级商户号
+	SubMchID string `json:"sub_mchid"`
+	// 微信订单号
+	TransactionID string `json:"transaction_id"`
+	// 商户分账单号
+	OutOrderNo string `json:"out_order_no"`
+	// 分账描述
+	Description string `json:"description"`
+}
+
+// 完结分账返回
+type ProfitShareFinishResponse struct {
+	// 二级商户号
+	SubMchID string `json:"sub_mchid"`
+	// 微信订单号
+	TransactionID string `json:"transaction_id"`
+	// 商户分账单号
+	OutOrderNo string `json:"out_order_no"`
+	// 微信分账单号
+	OrderID string `json:"order_id"`
+}
+
+// 完结分账API
+func (c MerchantApiClient) ProfitShareFinish(req ProfitShareFinishRequest) (resp *ProfitShareFinishResponse, err error) {
+	url := "/v3/ecommerce/profitsharing/finish-order"
+	body, _ := json.Marshal(&req)
+	res, err := c.doRequest(context.Background(), "POST", url, "query", body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal([]byte(res), &resp)
+	return
+}
