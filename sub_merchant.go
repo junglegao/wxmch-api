@@ -3,6 +3,7 @@ package wxmch_api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 )
 
 type SubmitApplymentResp struct {
@@ -130,4 +131,140 @@ func (c MerchantApiClient) SubmitApplyment(req SubmitApplymentRequest) (resp *Su
 	err = json.Unmarshal([]byte(res), &resp)
 	return
 
+}
+
+type QueryApplymentByIDRequest struct {
+	// 微信支付申请单号
+	ApplymentID string
+}
+
+type QueryApplymentByOutRequestNoRequest struct {
+	// 业务申请编号
+	OutRequestNo string
+}
+
+type QueryApplymentResponse struct {
+	// 申请状态
+	ApplymentState string `json:"applyment_state"`
+	// 申请状态描述
+	ApplymentStateDesc string `json:"applyment_state_desc"`
+	// 签约链接
+	SignUrl string `json:"sign_url"`
+	// 电商平台二级商户号
+	SubMchID string `json:"sub_mchid"`
+	// 汇款账户验证信息
+	AccountValidation struct{
+		// 付款户名
+		AccountName string `json:"account_name"`
+		// 付款卡号
+		AccountNo string `json:"account_no"`
+		// 汇款金额 （以分为单位）
+		PayAmount string `json:"pay_amount"`
+		// 收款卡号
+		DestinationAccountNumber string `json:"destination_account_number"`
+		// 收款户名
+		DestinationAccountName string `json:"destination_account_name"`
+		// 开户银行
+		DestinationAccountBank string `json:"destination_account_bank"`
+		// 省市信息
+		City string `json:"city"`
+		// 备注信息
+		Remark string `json:"remark"`
+		// 汇款截止时间
+		Deadline string `json:"deadline"`
+	} `json:"account_validation"`
+	// 驳回原因详情
+	AuditDetail []struct{
+		// 参数名称
+		ParamName string `json:"param_name"`
+		// 驳回原因
+		RejectReason string `json:"reject_reason"`
+	} `json:"audit_detail"`
+	// 法人验证链接
+	LegalValidationUrl string `json:"legal_validation_url"`
+	// 业务申请编号
+	OutRequestNo string `json:"out_request_no"`
+	// 微信支付申请单号
+	ApplymentID string `json:"applyment_id"`
+}
+
+// 通过申请单ID查询申请状态
+func (c MerchantApiClient) QueryApplymentByID(req QueryApplymentByIDRequest) (resp *QueryApplymentResponse, err error) {
+	url := fmt.Sprintf("/v3/ecommerce/applyments/%s", req.ApplymentID)
+	res, err := c.doRequest(context.Background(), "GET", url, "", nil)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal([]byte(res), &resp)
+	return
+}
+
+// 通过业务申请编号查询申请状态
+func (c MerchantApiClient) QueryApplymentByOutRequestNo(req QueryApplymentByOutRequestNoRequest) (resp *QueryApplymentResponse, err error) {
+	url := fmt.Sprintf("/v3/ecommerce/applyments/out-request-no/%s", req.OutRequestNo)
+	res, err := c.doRequest(context.Background(), "GET", url, "", nil)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal([]byte(res), &resp)
+	return
+}
+
+type ModifySettlementRequest struct {
+	// 特约商户号
+	SubMchID string
+	// 账户类型
+	AccountType string `json:"account_type"`
+	// 开户银行
+	AccountBank string `json:"account_bank"`
+	// 开户银行省市编码
+	BankAddressCode string `json:"bank_address_code"`
+	// 开户银行全称（含支行）
+	BankName string `json:"bank_name"`
+	// 开户银行联行号
+	BankBranchID string `json:"bank_branch_id"`
+	// 银行账号
+	AccountNumber string `json:"account_number"`
+}
+
+// 修改结算帐号API
+func (c MerchantApiClient) ModifySettlement(req ModifySettlementRequest) (err error) {
+	url := fmt.Sprintf("/v3/apply4sub/sub_merchants/%s/modify-settlement", req.SubMchID)
+	body, _ := json.Marshal(&req)
+	_, err = c.doRequest(context.Background(), "POST", url, "", body)
+	if err != nil {
+		return
+	}
+	return
+}
+
+type QuerySettlementRequest struct {
+	// 特约商户号
+	SubMchID string
+}
+
+type QuerySettlementResponse struct {
+	// 账户类型
+	AccountType string `json:"account_type"`
+	// 开户银行
+	AccountBank string `json:"account_bank"`
+	// 开户银行全称（含支行）
+	BankName string `json:"bank_name"`
+	// 开户银行联行号
+	BankBranchID string `json:"bank_branch_id"`
+	// 银行账号
+	AccountNumber string `json:"account_number"`
+	// 汇款验证结果
+	VerifyResult string `json:"verify_result"`
+}
+
+// 查询结算账户API
+func (c MerchantApiClient) QuerySettlement(req QuerySettlementRequest) (resp *QuerySettlementResponse, err error) {
+	url := fmt.Sprintf("/v3/apply4sub/sub_merchants/%s/settlement", req.SubMchID)
+	res, err := c.doRequest(context.Background(), "GET", url, "", nil)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal([]byte(res), &resp)
+	return
 }
