@@ -11,10 +11,14 @@ import (
 	电商收付通分账接口：
 		请求分账
 		查询分账结果
+		分账回退
+		查询分账回退结果
+		查询剩余待分账金额
+		分账完结
  */
 
 // 请求分账参数
-type ApplyProfitShareRequest struct {
+type ProfitShareApplyRequest struct {
 	// 服务商appid
 	SpAppID string `json:"appid"`
 	// 二级商户号
@@ -40,7 +44,7 @@ type ApplyProfitShareRequest struct {
 	Finish bool `json:"finish"`
 }
 
-type ApplyProfitShareResponse struct {
+type ProfitShareApplyResponse struct {
 	// 二级商户号
 	SubMchID string `json:"sub_mchid"`
 	// 微信订单号
@@ -52,7 +56,7 @@ type ApplyProfitShareResponse struct {
 }
 
 // 请求分账API
-func (c MerchantApiClient) ApplyProfitShare(req ApplyProfitShareRequest) (resp *ApplyProfitShareResponse, err error) {
+func (c MerchantApiClient) ProfitShareApply(req ProfitShareApplyRequest) (resp *ProfitShareApplyResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/orders"
 	body, _ := json.Marshal(&req)
 	res, err := c.doRequest(context.Background(), "POST", url, "", body)
@@ -63,7 +67,7 @@ func (c MerchantApiClient) ApplyProfitShare(req ApplyProfitShareRequest) (resp *
 	return
 }
 
-type QueryProfitShareRequest struct {
+type ProfitShareQueryRequest struct {
 	// 二级商户号
 	SubMchID string
 	// 微信订单号
@@ -72,7 +76,7 @@ type QueryProfitShareRequest struct {
 	OutOrderNo string
 }
 
-type QueryProfitShareResponse struct {
+type ProfitShareQueryResponse struct {
 	// 二级商户号
 	SubMchID string `json:"sub_mchid"`
 	// 微信订单号
@@ -111,7 +115,7 @@ type QueryProfitShareResponse struct {
 }
 
 // 查询分账结果API
-func (c MerchantApiClient) QueryProfitShare(req QueryProfitShareRequest) (resp *QueryProfitShareResponse, err error) {
+func (c MerchantApiClient) ProfitShareQuery(req ProfitShareQueryRequest) (resp *ProfitShareQueryResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/orders"
 	query := fmt.Sprintf("sub_mchid=%s&transaction_id=%s&out_order_no=%s", req.SubMchID, req.TransactionID, req.OutOrderNo)
 	res, err := c.doRequest(context.Background(), "GET", url, query, nil)
