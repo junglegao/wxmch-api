@@ -3,6 +3,7 @@ package wxmch_api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -113,6 +114,117 @@ type QueryProfitShareResponse struct {
 func (c MerchantApiClient) QueryProfitShare(req QueryProfitShareRequest) (resp *QueryProfitShareResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/orders"
 	query := fmt.Sprintf("sub_mchid=%s&transaction_id=%s&out_order_no=%s", req.SubMchID, req.TransactionID, req.OutOrderNo)
+	res, err := c.doRequest(context.Background(), "GET", url, query, nil)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal([]byte(res), &resp)
+	return
+}
+
+// 分账回退参数
+type ProfitReturnApplyRequest struct {
+	// 二级商户号
+	SubMchID string `json:"sub_mchid"`
+	// 微信分账单号
+	OrderID string `json:"order_id"`
+	// 商户分账单号
+	OutOrderNo string `json:"out_order_no"`
+	// 商户回退单号
+	OutReturnNo string `json:"out_return_no"`
+	// 回退商户号
+	ReturnMchID	string `json:"return_mchid"`
+	// 回退金额
+	Amount uint `json:"amount"`
+	// 回退描述
+	Description string `json:"description"`
+}
+
+// 分账回退返回
+type ProfitReturnApplyResponse struct {
+	// 二级商户号
+	SubMchID string `json:"sub_mchid"`
+	// 微信分账单号
+	OrderID string `json:"order_id"`
+	// 商户分账单号
+	OutOrderNo string `json:"out_order_no"`
+	// 商户回退单号
+	OutReturnNo string `json:"out_return_no"`
+	// 回退商户号
+	ReturnMchID	string `json:"return_mchid"`
+	// 回退金额
+	Amount uint `json:"amount"`
+	// 微信回退单号
+	ReturnNo string `json:"return_no"`
+	// 回退结果
+	Result string `json:"result"`
+	// 失败原因
+	FailReason string `json:"fail_reason"`
+	// 分账回退完成时间
+	FinishTime string `json:"finish_time"`
+}
+
+// 请求分账回退API
+func (c MerchantApiClient) ProfitReturnApply(req ProfitReturnApplyRequest) (resp *ProfitReturnApplyResponse, err error) {
+	url := "/v3/ecommerce/profitsharing/returnorders"
+	body, _ := json.Marshal(&req)
+	res, err := c.doRequest(context.Background(), "POST", url, "", body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal([]byte(res), &resp)
+	return
+}
+
+// 查询分账回退结果参数
+type ProfitReturnQueryRequest struct {
+	// 二级商户号
+	SubMchID string
+	// 微信分账单号
+	OrderID string
+	// 商户分账单号
+	OutOrderNo string
+	// 商户回退单号
+	OutReturnNo string
+}
+
+type ProfitReturnQueryResponse struct {
+	// 二级商户号
+	SubMchID string `json:"sub_mchid"`
+	// 微信分账单号
+	OrderID string `json:"order_id"`
+	// 商户分账单号
+	OutOrderNo string `json:"out_order_no"`
+	// 商户回退单号
+	OutReturnNo string `json:"out_return_no"`
+	// 回退商户号
+	ReturnMchID	string `json:"return_mchid"`
+	// 回退金额
+	Amount uint `json:"amount"`
+	// 微信回退单号
+	ReturnNo string `json:"return_no"`
+	// 回退结果
+	Result string `json:"result"`
+	// 失败原因
+	FailReason string `json:"fail_reason"`
+	// 分账回退完成时间
+	FinishTime string `json:"finish_time"`
+}
+
+// 查询分账回退结果API
+func (c MerchantApiClient) ProfitReturnQuery(req ProfitReturnQueryRequest) (resp ProfitReturnQueryResponse, err error)  {
+	url := "/v3/ecommerce/profitsharing/returnorders"
+	query := fmt.Sprintf("sub_mchid=%s&out_return_no=%s", req.SubMchID, req.OutReturnNo)
+	if req.OutOrderNo == "" && req.OrderID == "" {
+		err = errors.New(fmt.Sprintf("out_order_no和order_id不能同时为空"))
+		return
+	}
+	if req.OutOrderNo != "" {
+		query += fmt.Sprintf("&out_order_no=%s", req.OutOrderNo)
+	}
+	if req.OrderID != "" {
+		query += fmt.Sprintf("&order_id=%s", req.OrderID)
+	}
 	res, err := c.doRequest(context.Background(), "GET", url, query, nil)
 	if err != nil {
 		return
