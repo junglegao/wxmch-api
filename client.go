@@ -51,7 +51,7 @@ func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, bas
 }
 
 
-const AUTH_TYPE = "WECHATPAY2-SHA256-RSA2048"
+const AUTHTYPE = "WECHATPAY2-SHA256-RSA2048"
 const BOUNDARY = "boundary"
 type ContentType string
 
@@ -60,11 +60,12 @@ const ContentTypeJPG ContentType = "image/jpg"
 const ContentTypeBMP ContentType = "image/bmp"
 
 func (c MerchantApiClient) formatAuthorizationHeader(nonce string, ts int, signature string) (auth string) {
-	auth = fmt.Sprintf("%s mchid=\"%s\",nonce_str=\"%s\",serial_no=\"%s\",timestamp=\"%d\",signature=\"%s\"", AUTH_TYPE, c.mchId, nonce, c.certSerialNo, ts, signature)
+	auth = fmt.Sprintf("%s mchid=\"%s\",nonce_str=\"%s\",serial_no=\"%s\",timestamp=\"%d\",signature=\"%s\"", AUTHTYPE, c.mchId, nonce, c.certSerialNo, ts, signature)
 	return
 }
 
-func (c MerchantApiClient) doRequest(ctx context.Context, method string, url string, query string, body []byte) (resp string, err error){
+// 普通http api请求
+func (c MerchantApiClient) doRequest(ctx context.Context, method string, url string, query string, body []byte) (resp *http.Response, err error) {
 	nonce := RandStringBytesMaskImprSrc(10)
 	ts := int(time.Now().Unix())
 	signature, _ := CreateSignature(method, url, ts, nonce, body, c.apiCert)
@@ -78,11 +79,31 @@ func (c MerchantApiClient) doRequest(ctx context.Context, method string, url str
 	req.Header.Set("Authorization", c.formatAuthorizationHeader(nonce, ts, signature))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0")
-	rawResp, err := h.Do(req)
+	resp, err = h.Do(req)
+
+	return
+}
+
+// 没有验签功能的api请求
+func (c MerchantApiClient) doRequestWithoutVerifySignature(ctx context.Context, method string, url string, query string, body []byte) (resp []byte, err error) {
+	rawResp, err := c.doRequest(ctx, method, url, query, body)
 	if err != nil {
 		return
 	}
-	respBody, err := ioutil.ReadAll(rawResp.Body)
+	resp, err = ioutil.ReadAll(rawResp.Body)
+	if err != nil {
+		return
+	}
+	return
+}
+
+// 带验签功能的api请求
+func (c MerchantApiClient) doRequestAndVerifySignature(ctx context.Context, method string, url string, query string, body []byte) (resp []byte, err error){
+	rawResp, err := c.doRequest(ctx, method, url, query, body)
+	if err != nil {
+		return
+	}
+	resp, err = ioutil.ReadAll(rawResp.Body)
 	if err != nil {
 		return
 	}
@@ -91,16 +112,15 @@ func (c MerchantApiClient) doRequest(ctx context.Context, method string, url str
 	wechatNonce := rawResp.Header.Get("Wechatpay-Nonce")
 	timestamp := rawResp.Header.Get("Wechatpay-Timestamp")
 	wechatSerial := rawResp.Header.Get("Wechatpay-Serial")
-	if !VerifyWechatSignature(timestamp, wechatNonce, respBody, wechatSignature, c.certMap.GetPublicKey(wechatSerial)) {
+	if !VerifyWechatSignature(timestamp, wechatNonce, resp, wechatSignature, c.certMap.GetPublicKey(wechatSerial)) {
 		err = errors.New("resp签名错误")
 		return
 	}
-	resp = string(respBody)
 	return
 }
 
 // 表单提交上传图片专用
-func (c MerchantApiClient) doFormUpload(ctx context.Context, url string, fBytes []byte, fName string, fileType ContentType) (resp string, err error) {
+func (c MerchantApiClient) doFormUpload(ctx context.Context, url string, fBytes []byte, fName string, fileType ContentType) (resp []byte, err error) {
 	nonce := RandStringBytesMaskImprSrc(10)
 	ts := int(time.Now().Unix())
 
@@ -126,7 +146,7 @@ func (c MerchantApiClient) doFormUpload(ctx context.Context, url string, fBytes 
 	if err != nil {
 		return
 	}
-	respBody, err := ioutil.ReadAll(rawResp.Body)
+	resp, err = ioutil.ReadAll(rawResp.Body)
 	if err != nil {
 		return
 	}
@@ -135,10 +155,9 @@ func (c MerchantApiClient) doFormUpload(ctx context.Context, url string, fBytes 
 	wechatNonce := rawResp.Header.Get("Wechatpay-Nonce")
 	timestamp := rawResp.Header.Get("Wechatpay-Timestamp")
 	wechatSerial := rawResp.Header.Get("Wechatpay-Serial")
-	if !VerifyWechatSignature(timestamp, wechatNonce, respBody, wechatSignature, c.certMap.GetPublicKey(wechatSerial)) {
+	if !VerifyWechatSignature(timestamp, wechatNonce, resp, wechatSignature, c.certMap.GetPublicKey(wechatSerial)) {
 		err = errors.New("resp签名错误")
 		return
 	}
-	resp = string(respBody)
 	return
 }

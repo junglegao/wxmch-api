@@ -22,11 +22,11 @@ type GetCertificatesResp struct {
 
 // 获取平台证书列表
 func (c MerchantApiClient) GetCertificates() (resp *GetCertificatesResp, err error){
-	res, err := c.doRequest(context.Background(), "GET", "/v3/certificates", "", nil)
+	res, err := c.doRequestWithoutVerifySignature(context.Background(), "GET", "/v3/certificates", "", nil)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }
 

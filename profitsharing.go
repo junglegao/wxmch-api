@@ -59,11 +59,11 @@ type ProfitShareApplyResponse struct {
 func (c MerchantApiClient) ProfitShareApply(req ProfitShareApplyRequest) (resp *ProfitShareApplyResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/orders"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequest(context.Background(), "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", url, "", body)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }
 
@@ -118,11 +118,11 @@ type ProfitShareQueryResponse struct {
 func (c MerchantApiClient) ProfitShareQuery(req ProfitShareQueryRequest) (resp *ProfitShareQueryResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/orders"
 	query := fmt.Sprintf("sub_mchid=%s&transaction_id=%s&out_order_no=%s", req.SubMchID, req.TransactionID, req.OutOrderNo)
-	res, err := c.doRequest(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }
 
@@ -172,11 +172,11 @@ type ProfitReturnApplyResponse struct {
 func (c MerchantApiClient) ProfitReturnApply(req ProfitReturnApplyRequest) (resp *ProfitReturnApplyResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/returnorders"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequest(context.Background(), "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", url, "", body)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }
 
@@ -229,11 +229,11 @@ func (c MerchantApiClient) ProfitReturnQuery(req ProfitReturnQueryRequest) (resp
 	if req.OrderID != "" {
 		query += fmt.Sprintf("&order_id=%s", req.OrderID)
 	}
-	res, err := c.doRequest(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }
 
@@ -254,11 +254,11 @@ type ProfitShareUnSplitAmountQueryResponse struct {
 // 查询订单剩余待分金额API
 func (c MerchantApiClient) ProfitShareUnSplitAmountQuery(req ProfitShareUnSplitAmountQueryRequest) (resp *ProfitShareUnSplitAmountQueryResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/profitsharing/orders/%s/amounts", req.TransactionID)
-	res, err := c.doRequest(context.Background(), "GET", url, "query", nil)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, "query", nil)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }
 
@@ -290,10 +290,10 @@ type ProfitShareFinishResponse struct {
 func (c MerchantApiClient) ProfitShareFinish(req ProfitShareFinishRequest) (resp *ProfitShareFinishResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/finish-order"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequest(context.Background(), "POST", url, "query", body)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", url, "query", body)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }

@@ -101,11 +101,11 @@ type PrepayPayResponse struct {
 func (c MerchantApiClient) JsApiPrepay(req JsApiPrepayRequest) (resp *PrepayPayResponse, err error) {
 	url := "/v3/pay/partner/transactions/jsapi"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequest(context.Background(), "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", url, "", body)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }
 
@@ -217,11 +217,11 @@ type QueryPayResultResponse struct {
 func (c MerchantApiClient) QueryPayResultByTransactionID(req QueryPayResultByTransactionIDRequest) (resp *QueryPayResultResponse, err error) {
 	url := fmt.Sprintf("/v3/pay/partner/transactions/id/%s", req.TransactionID)
 	query := fmt.Sprintf("sp_mchid=%s&sub_mchid=%s", req.SpMchID, req.SpMchID)
-	res, err := c.doRequest(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }
 
@@ -229,10 +229,10 @@ func (c MerchantApiClient) QueryPayResultByTransactionID(req QueryPayResultByTra
 func (c MerchantApiClient) QueryPayResultByOutRequestNo(req QueryPayResultByOutRequestNoRequest) (resp *QueryPayResultResponse, err error) {
 	url := fmt.Sprintf("/v3/pay/partner/transactions/out-trade-no/%s", req.OutTradeNo)
 	query := fmt.Sprintf("sp_mchid=%s&sub_mchid=%s", req.SpMchID, req.SpMchID)
-	res, err := c.doRequest(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }

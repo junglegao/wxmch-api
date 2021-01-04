@@ -75,11 +75,11 @@ type RefundResponse struct {
 func (c MerchantApiClient) Refund(req RefundRequest) (resp *RefundResponse, err error){
 	url := "/v3/ecommerce/refunds/apply"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequest(context.Background(), "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", url, "", body)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }
 
@@ -145,21 +145,21 @@ type QueryRefundResponse struct {
 func (c MerchantApiClient) QueryRefundByID(req QueryRefundByIDRequest) (resp *QueryRefundResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/refunds/id/%s", req.RefundID)
 	query := fmt.Sprintf("sub_mchid=%s", req.SubMchID)
-	res, err := c.doRequest(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }
 
 func (c MerchantApiClient) QueryRefundByOutRefundNo(req QueryRefundByOutRefundNoRequest) (resp *QueryRefundResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/refunds/out-refund-no/%s", req.OutRefundNo)
 	query := fmt.Sprintf("sub_mchid=%s", req.SubMchID)
-	res, err := c.doRequest(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }

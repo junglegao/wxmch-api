@@ -67,6 +67,6 @@ func (c MerchantApiClient) MediaUpload (req MediaUploadRequest) (resp MediaUploa
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(res), &resp)
+	err = json.Unmarshal(res, &resp)
 	return
 }
