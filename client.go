@@ -94,6 +94,8 @@ func (c MerchantApiClient) doRequest(ctx context.Context, method string, url str
 	req.Header.Set("Authorization", c.formatAuthorizationHeader(nonce, ts, signature))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Wechatpay-Serial", c.platformSerialNo)
 	resp, err = h.Do(req)
 
 	return
