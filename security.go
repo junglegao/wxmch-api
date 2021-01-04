@@ -17,21 +17,9 @@ import (
 	"strings"
 )
 
-// 生成API调用时需要的签名
-func CreateSignature(method string,  url string, ts int, nounce string, body []byte, priKey string) (signature string, err error) {
-	// 签名前的字符串
-	sBeforeSign := strings.Join([]string{method, url, fmt.Sprintf("%d", ts), nounce}, "\n") + "\n"
-	if method == "GET" {
-		sBeforeSign += "\n"
-	} else {
-		sBeforeSign += string(body) + "\n"
-	}
-
-
-	h := sha256.New()
-	h.Write([]byte(sBeforeSign))
-	hashed := h.Sum(nil)
-	block, _ := pem.Decode([]byte(priKey))
+// 生成rsa私钥
+func buildRSAPrivateKey(keyContent string) (priKey *rsa.PrivateKey, err error){
+	block, _ := pem.Decode([]byte(keyContent))
 	if block == nil {
 		err = errors.New("private key error")
 		return
@@ -40,13 +28,29 @@ func CreateSignature(method string,  url string, ts int, nounce string, body []b
 	if err != nil {
 		return
 	}
-	privateKey, ok := key.(*rsa.PrivateKey)
+	priKey, ok := key.(*rsa.PrivateKey)
 	if !ok {
 		err = errors.New("private key 不是rsa格式")
 		return
 	}
+	return
+}
 
-	sign, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hashed)
+// 生成API调用时需要的签名
+func CreateSignature(method string,  url string, ts int, nounce string, body []byte, priKey *rsa.PrivateKey) (signature string, err error) {
+	// 签名前的字符串
+	sBeforeSign := strings.Join([]string{method, url, fmt.Sprintf("%d", ts), nounce}, "\n") + "\n"
+	if method == "GET" {
+		sBeforeSign += "\n"
+	} else {
+		sBeforeSign += string(body) + "\n"
+	}
+
+	h := sha256.New()
+	h.Write([]byte(sBeforeSign))
+	hashed := h.Sum(nil)
+
+	sign, err := rsa.SignPKCS1v15(rand.Reader, priKey, crypto.SHA256, hashed)
 	if err != nil {
 		return
 	}
@@ -77,7 +81,7 @@ func VerifyWechatSignature(ts string, nonce string, body []byte, b64Sig string, 
 }
 
 // 用于平台证书解密和回调报文的解密
-func decryptCiphertext(associatedData string, nonce string, ciphertext string, apiSecret string) (plaintext []byte){
+func decryptCiphertextWithGCM(associatedData string, nonce string, ciphertext string, apiSecret string) (plaintext []byte){
 	ct, _ := base64.StdEncoding.DecodeString(ciphertext)
 	nc := []byte(nonce)
 	block, err := aes.NewCipher([]byte(apiSecret))
@@ -132,7 +136,7 @@ func ParseP12Cert(content []byte, password string) (rsaPublicKey *rsa.PublicKey,
 }
 
 // 敏感信息的加密
-func CreateCiphertext(text string, rsaPublicKey *rsa.PublicKey) (ciphertext string) {
+func encryptCiphertext(text string, rsaPublicKey *rsa.PublicKey) (ciphertext string) {
 	secretMessage := []byte(text)
 	rng := rand.Reader
 
@@ -142,7 +146,7 @@ func CreateCiphertext(text string, rsaPublicKey *rsa.PublicKey) (ciphertext stri
 }
 
 // 敏感信息的解密
-func DecryptCiphertext(ciphertext string, rsaPrivateKey *rsa.PrivateKey) (text string, err error) {
+func decryptCiphertext(ciphertext string, rsaPrivateKey *rsa.PrivateKey) (text string, err error) {
 	cipherdata, _ := base64.StdEncoding.DecodeString(ciphertext)
 	rng := rand.Reader
 

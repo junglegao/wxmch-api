@@ -3,6 +3,7 @@ package wxmch_api
 import (
 	"bytes"
 	"context"
+	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -19,33 +20,43 @@ type MerchantApiClient struct {
 	mchId string
 	// 商户api证书序列号
 	certSerialNo string
-	// apiCert 商户api证书私钥
+	// apiCert 商户api证书私钥明文
 	apiCert string
 	// baseUrl
 	baseUrl string
 	// timeout 调用微信支付接口超时时间
 	timeout time.Duration
-	// certMap 平台证书map
-	certMap PlatformCertificatesMap
+	// platformCertMap 平台证书map
+	platformCertMap PlatformCertificatesMap
+	// 平台证书编号（最新的）
+	platformSerialNo string
+	//api rsa private key 商户api证书私钥
+	apiPriKey *rsa.PrivateKey
 }
 
 const maxTimeout = 30*time.Second
 const minTimeout = 1*time.Second
 
-func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, baseUrl string, timeout time.Duration, certMap PlatformCertificatesMap) (client MerchantApiClient) {
+func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, baseUrl string, timeout time.Duration, certMap PlatformCertificatesMap, platformNo string) (client MerchantApiClient) {
 	if timeout > maxTimeout {
 		timeout = maxTimeout
 	}
 	if timeout < minTimeout {
 		timeout = minTimeout
 	}
+	apiPriKey, err := buildRSAPrivateKey(apiCert)
+	if err != nil {
+		panic("错误的商户证书")
+	}
 	client = MerchantApiClient{
-		mchId:        mchId,
-		certSerialNo: certSerialNo,
-		apiCert: apiCert,
-		baseUrl: baseUrl,
-		timeout: timeout,
-		certMap: certMap,
+		mchId:           mchId,
+		certSerialNo:    certSerialNo,
+		apiCert:         apiCert,
+		baseUrl:         baseUrl,
+		timeout:         timeout,
+		platformCertMap: certMap,
+		platformSerialNo: platformNo,
+		apiPriKey : apiPriKey,
 	}
 	return
 }
@@ -64,11 +75,15 @@ func (c MerchantApiClient) formatAuthorizationHeader(nonce string, ts int, signa
 	return
 }
 
+func (c MerchantApiClient) getPlatformPublicKey() (pubKey *rsa.PublicKey) {
+	return c.platformCertMap.GetPublicKey(c.platformSerialNo)
+}
+
 // 普通http api请求
 func (c MerchantApiClient) doRequest(ctx context.Context, method string, url string, query string, body []byte) (resp *http.Response, err error) {
 	nonce := RandStringBytesMaskImprSrc(10)
 	ts := int(time.Now().Unix())
-	signature, _ := CreateSignature(method, url, ts, nonce, body, c.apiCert)
+	signature, _ := CreateSignature(method, url, ts, nonce, body, c.apiPriKey)
 
 	h := &http.Client{Timeout: c.timeout}
 	requestUrl := c.baseUrl+url
@@ -112,7 +127,7 @@ func (c MerchantApiClient) doRequestAndVerifySignature(ctx context.Context, meth
 	wechatNonce := rawResp.Header.Get("Wechatpay-Nonce")
 	timestamp := rawResp.Header.Get("Wechatpay-Timestamp")
 	wechatSerial := rawResp.Header.Get("Wechatpay-Serial")
-	if !VerifyWechatSignature(timestamp, wechatNonce, resp, wechatSignature, c.certMap.GetPublicKey(wechatSerial)) {
+	if !VerifyWechatSignature(timestamp, wechatNonce, resp, wechatSignature, c.platformCertMap.GetPublicKey(wechatSerial)) {
 		err = errors.New("resp签名错误")
 		return
 	}
@@ -133,7 +148,7 @@ func (c MerchantApiClient) doFormUpload(ctx context.Context, url string, fBytes 
 		Sha256:   hex.EncodeToString(hash[:]),
 	}
 	metaStr, _ := json.Marshal(meta)
-	signature, _ := CreateSignature("POST", url, ts, nonce, metaStr, c.apiCert)
+	signature, _ := CreateSignature("POST", url, ts, nonce, metaStr, c.apiPriKey)
 	reqBody := fmt.Sprintf("--%s\r\nContent-Disposition: form-data; name=\"meta\";\r\nContent-Type: application/json\r\n\r\n%s\r\n--%s\r\nContent-Disposition: form-data; name=\"file\"; filename=\"%s\";\r\nContent-Type: %s\r\n\r\n%s\r\n--%s--", BOUNDARY, metaStr, BOUNDARY, fName, fileType, fBytes, BOUNDARY)
 	h := &http.Client{Timeout: c.timeout}
 	requestUrl := c.baseUrl+url
@@ -155,7 +170,7 @@ func (c MerchantApiClient) doFormUpload(ctx context.Context, url string, fBytes 
 	wechatNonce := rawResp.Header.Get("Wechatpay-Nonce")
 	timestamp := rawResp.Header.Get("Wechatpay-Timestamp")
 	wechatSerial := rawResp.Header.Get("Wechatpay-Serial")
-	if !VerifyWechatSignature(timestamp, wechatNonce, resp, wechatSignature, c.certMap.GetPublicKey(wechatSerial)) {
+	if !VerifyWechatSignature(timestamp, wechatNonce, resp, wechatSignature, c.platformCertMap.GetPublicKey(wechatSerial)) {
 		err = errors.New("resp签名错误")
 		return
 	}

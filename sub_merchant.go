@@ -2,6 +2,7 @@ package wxmch_api
 
 import (
 	"context"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 )
@@ -123,6 +124,28 @@ type SubmitApplymentRequest struct {
 
 // 二级商户进件
 func (c MerchantApiClient) ApplymentSubmit(req SubmitApplymentRequest) (resp *SubmitApplymentResp, err error) {
+	// 法人身份证姓名和号码需要加密
+	pubKey := c.getPlatformPublicKey()
+	req.IDCardInfo.IDCardName = encryptCiphertext(req.IDCardInfo.IDCardName, pubKey)
+	req.IDCardInfo.IDCardNumber = encryptCiphertext(req.IDCardInfo.IDCardNumber, pubKey)
+	// 超级管理员姓名、身份证、手机号、邮箱需要加密
+	req.ContactInfo.ContactName = encryptCiphertext(req.ContactInfo.ContactName, pubKey)
+	req.ContactInfo.ContactIDCardNumber = encryptCiphertext(req.ContactInfo.ContactIDCardNumber, pubKey)
+	req.ContactInfo.MobilePhone = encryptCiphertext(req.ContactInfo.MobilePhone, pubKey)
+	req.ContactInfo.ContactEmail = encryptCiphertext(req.ContactInfo.ContactEmail, pubKey)
+	// 法人其他证件信息（选传）如果有，需要加密
+	if req.IDDocInfo.IDDocName != ""{
+		req.IDDocInfo.IDDocName = encryptCiphertext(req.IDDocInfo.IDDocName, pubKey)
+	}
+	if req.IDDocInfo.IDDocNumber != "" {
+		req.IDDocInfo.IDDocNumber = encryptCiphertext(req.IDDocInfo.IDDocNumber, pubKey)
+	}
+	// 结算银行账户 如果有，需要加密
+	if req.NeedAccountInfo {
+		req.AccountInfo.AccountName = encryptCiphertext(req.AccountInfo.AccountName, pubKey)
+		req.AccountInfo.AccountNumber = encryptCiphertext(req.AccountInfo.AccountNumber, pubKey)
+	}
+
 	body, _ := json.Marshal(&req)
 	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", "/v3/ecommerce/applyments/", "", body)
 	if err != nil {
@@ -143,7 +166,7 @@ type QueryApplymentByOutRequestNoRequest struct {
 	OutRequestNo string
 }
 
-type QueryApplymentResponse struct {
+type ApplymentQueryResponse struct {
 	// 申请状态
 	ApplymentState string `json:"applyment_state"`
 	// 申请状态描述
@@ -188,25 +211,58 @@ type QueryApplymentResponse struct {
 	ApplymentID string `json:"applyment_id"`
 }
 
+const AccountNeedVerifyState = `ACCOUNT_NEED_VERIFY`
+
+// 申请单查询结果脱敏
+func (r *ApplymentQueryResponse) desensitize(priKey *rsa.PrivateKey) (err error){
+	// -汇款账户验证信息 当申请状态为ACCOUNT_NEED_VERIFY 时有返回，可根据指引汇款，完成账户验证。
+	// 付款户名和付款卡号需要脱敏
+	if r.ApplymentState == AccountNeedVerifyState {
+		r.AccountValidation.AccountName, err = decryptCiphertext(r.AccountValidation.AccountName, priKey)
+		if err != nil {
+			return
+		}
+		r.AccountValidation.AccountNo, err = decryptCiphertext(r.AccountValidation.AccountNo, priKey)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
 // 通过申请单ID查询申请状态
-func (c MerchantApiClient) ApplymentQueryByID(req QueryApplymentByIDRequest) (resp *QueryApplymentResponse, err error) {
+func (c MerchantApiClient) ApplymentQueryByID(req QueryApplymentByIDRequest) (resp *ApplymentQueryResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/applyments/%s", req.ApplymentID)
 	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, "", nil)
 	if err != nil {
 		return
 	}
 	err = json.Unmarshal(res, &resp)
+	if err != nil {
+		return
+	}
+	err = resp.desensitize(c.apiPriKey)
+	if err != nil {
+		return
+	}
 	return
 }
 
 // 通过业务申请编号查询申请状态
-func (c MerchantApiClient) ApplymentQueryByOutRequestNo(req QueryApplymentByOutRequestNoRequest) (resp *QueryApplymentResponse, err error) {
+func (c MerchantApiClient) ApplymentQueryByOutRequestNo(req QueryApplymentByOutRequestNoRequest) (resp *ApplymentQueryResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/applyments/out-request-no/%s", req.OutRequestNo)
 	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, "", nil)
 	if err != nil {
 		return
 	}
 	err = json.Unmarshal(res, &resp)
+	if err != nil {
+		return
+	}
+	err = resp.desensitize(c.apiPriKey)
+	if err != nil {
+		return
+	}
 	return
 }
 
