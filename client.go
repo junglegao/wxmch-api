@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -24,12 +25,14 @@ type MerchantApiClient struct {
 	baseUrl string
 	// timeout 调用微信支付接口超时时间
 	timeout time.Duration
+	// certMap 平台证书map
+	certMap PlatformCertificatesMap
 }
 
 const maxTimeout = 30*time.Second
 const minTimeout = 1*time.Second
 
-func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, baseUrl string, timeout time.Duration) (client MerchantApiClient) {
+func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, baseUrl string, timeout time.Duration, certMap PlatformCertificatesMap) (client MerchantApiClient) {
 	if timeout > maxTimeout {
 		timeout = maxTimeout
 	}
@@ -42,6 +45,7 @@ func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, bas
 		apiCert: apiCert,
 		baseUrl: baseUrl,
 		timeout: timeout,
+		certMap: certMap,
 	}
 	return
 }
@@ -82,6 +86,15 @@ func (c MerchantApiClient) doRequest(ctx context.Context, method string, url str
 	if err != nil {
 		return
 	}
+	// 验证resp签名
+	wechatSignature := rawResp.Header.Get("Wechatpay-Signature")
+	wechatNonce := rawResp.Header.Get("Wechatpay-Nonce")
+	timestamp := rawResp.Header.Get("Wechatpay-Timestamp")
+	wechatSerial := rawResp.Header.Get("Wechatpay-Serial")
+	if !VerifyWechatSignature(timestamp, wechatNonce, respBody, wechatSignature, c.certMap.GetPublicKey(wechatSerial)) {
+		err = errors.New("resp签名错误")
+		return
+	}
 	resp = string(respBody)
 	return
 }
@@ -115,6 +128,15 @@ func (c MerchantApiClient) doFormUpload(ctx context.Context, url string, fBytes 
 	}
 	respBody, err := ioutil.ReadAll(rawResp.Body)
 	if err != nil {
+		return
+	}
+	// 验证resp签名
+	wechatSignature := rawResp.Header.Get("Wechatpay-Signature")
+	wechatNonce := rawResp.Header.Get("Wechatpay-Nonce")
+	timestamp := rawResp.Header.Get("Wechatpay-Timestamp")
+	wechatSerial := rawResp.Header.Get("Wechatpay-Serial")
+	if !VerifyWechatSignature(timestamp, wechatNonce, respBody, wechatSignature, c.certMap.GetPublicKey(wechatSerial)) {
+		err = errors.New("resp签名错误")
 		return
 	}
 	resp = string(respBody)
