@@ -72,7 +72,8 @@ type RefundResponse struct {
 	} `json:"promotion_detail"`
 }
 
-func (c MerchantApiClient) Refund(req RefundRequest) (resp *RefundResponse, err error){
+// 申请退款
+func (c MerchantApiClient) RefundApply(req RefundRequest) (resp *RefundResponse, err error){
 	url := "/v3/ecommerce/refunds/apply"
 	body, _ := json.Marshal(&req)
 	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", url, "", body)
@@ -142,6 +143,7 @@ type QueryRefundResponse struct {
 	} `json:"promotion_detail"`
 }
 
+// 通过微信支付退款单号查询退款
 func (c MerchantApiClient) QueryRefundByID(req QueryRefundByIDRequest) (resp *QueryRefundResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/refunds/id/%s", req.RefundID)
 	query := fmt.Sprintf("sub_mchid=%s", req.SubMchID)
@@ -153,6 +155,7 @@ func (c MerchantApiClient) QueryRefundByID(req QueryRefundByIDRequest) (resp *Qu
 	return
 }
 
+// 通过商户退款单号查询退款
 func (c MerchantApiClient) QueryRefundByOutRefundNo(req QueryRefundByOutRefundNoRequest) (resp *QueryRefundResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/refunds/out-refund-no/%s", req.OutRefundNo)
 	query := fmt.Sprintf("sub_mchid=%s", req.SubMchID)

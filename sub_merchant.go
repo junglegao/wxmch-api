@@ -122,7 +122,7 @@ type SubmitApplymentRequest struct {
 }
 
 // 二级商户进件
-func (c MerchantApiClient) SubmitApplyment(req SubmitApplymentRequest) (resp *SubmitApplymentResp, err error) {
+func (c MerchantApiClient) ApplymentSubmit(req SubmitApplymentRequest) (resp *SubmitApplymentResp, err error) {
 	body, _ := json.Marshal(&req)
 	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", "/v3/ecommerce/applyments/", "", body)
 	if err != nil {
@@ -189,7 +189,7 @@ type QueryApplymentResponse struct {
 }
 
 // 通过申请单ID查询申请状态
-func (c MerchantApiClient) QueryApplymentByID(req QueryApplymentByIDRequest) (resp *QueryApplymentResponse, err error) {
+func (c MerchantApiClient) ApplymentQueryByID(req QueryApplymentByIDRequest) (resp *QueryApplymentResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/applyments/%s", req.ApplymentID)
 	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, "", nil)
 	if err != nil {
@@ -200,7 +200,7 @@ func (c MerchantApiClient) QueryApplymentByID(req QueryApplymentByIDRequest) (re
 }
 
 // 通过业务申请编号查询申请状态
-func (c MerchantApiClient) QueryApplymentByOutRequestNo(req QueryApplymentByOutRequestNoRequest) (resp *QueryApplymentResponse, err error) {
+func (c MerchantApiClient) ApplymentQueryByOutRequestNo(req QueryApplymentByOutRequestNoRequest) (resp *QueryApplymentResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/applyments/out-request-no/%s", req.OutRequestNo)
 	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, "", nil)
 	if err != nil {
@@ -228,7 +228,7 @@ type ModifySettlementRequest struct {
 }
 
 // 修改结算帐号API
-func (c MerchantApiClient) ModifySettlement(req ModifySettlementRequest) (err error) {
+func (c MerchantApiClient) SettlementModify(req ModifySettlementRequest) (err error) {
 	url := fmt.Sprintf("/v3/apply4sub/sub_merchants/%s/modify-settlement", req.SubMchID)
 	body, _ := json.Marshal(&req)
 	_, err = c.doRequestAndVerifySignature(context.Background(), "POST", url, "", body)
@@ -259,7 +259,7 @@ type QuerySettlementResponse struct {
 }
 
 // 查询结算账户API
-func (c MerchantApiClient) QuerySettlement(req QuerySettlementRequest) (resp *QuerySettlementResponse, err error) {
+func (c MerchantApiClient) SettlementQuery(req QuerySettlementRequest) (resp *QuerySettlementResponse, err error) {
 	url := fmt.Sprintf("/v3/apply4sub/sub_merchants/%s/settlement", req.SubMchID)
 	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, "", nil)
 	if err != nil {

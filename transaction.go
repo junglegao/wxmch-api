@@ -214,7 +214,7 @@ type QueryPayResultResponse struct {
 }
 
 // 微信支付订单号查询交易结果
-func (c MerchantApiClient) QueryPayResultByTransactionID(req QueryPayResultByTransactionIDRequest) (resp *QueryPayResultResponse, err error) {
+func (c MerchantApiClient) PayResultQueryByTransactionID(req QueryPayResultByTransactionIDRequest) (resp *QueryPayResultResponse, err error) {
 	url := fmt.Sprintf("/v3/pay/partner/transactions/id/%s", req.TransactionID)
 	query := fmt.Sprintf("sp_mchid=%s&sub_mchid=%s", req.SpMchID, req.SpMchID)
 	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
@@ -226,7 +226,7 @@ func (c MerchantApiClient) QueryPayResultByTransactionID(req QueryPayResultByTra
 }
 
 // 商户订单号查询交易结果
-func (c MerchantApiClient) QueryPayResultByOutRequestNo(req QueryPayResultByOutRequestNoRequest) (resp *QueryPayResultResponse, err error) {
+func (c MerchantApiClient) PayResultQueryByOutRequestNo(req QueryPayResultByOutRequestNoRequest) (resp *QueryPayResultResponse, err error) {
 	url := fmt.Sprintf("/v3/pay/partner/transactions/out-trade-no/%s", req.OutTradeNo)
 	query := fmt.Sprintf("sp_mchid=%s&sub_mchid=%s", req.SpMchID, req.SpMchID)
 	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
