@@ -30,11 +30,13 @@ ProfitReturnApply | 请求分账回退
 ProfitReturnQuery | 查询分账回退结果
 ProfitShareFinish | 完结分账
 ProfitShareUnSplitAmountQuery | 查询订单剩余待分金额
+
 ##公共api
 | 方法名 | 备注 |
 | --- | --- |
 GetCertificates | 获取平台证书列表
 MediaUpload | 上传图片
+
 ##示例
 ```
 // 创建微信支付服务商客户端
