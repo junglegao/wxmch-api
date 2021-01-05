@@ -111,6 +111,11 @@ func (c MerchantApiClient) doRequestWithoutVerifySignature(ctx context.Context, 
 	if err != nil {
 		return
 	}
+	err = buildErrorIfExist(rawResp.StatusCode, resp)
+	if err != nil {
+		resp = nil
+		return
+	}
 	return
 }
 
@@ -124,6 +129,11 @@ func (c MerchantApiClient) doRequestAndVerifySignature(ctx context.Context, meth
 	if err != nil {
 		return
 	}
+	err = buildErrorIfExist(rawResp.StatusCode, resp)
+	if err != nil {
+		resp = nil
+		return
+	}
 	// 验证resp签名
 	wechatSignature := rawResp.Header.Get("Wechatpay-Signature")
 	wechatNonce := rawResp.Header.Get("Wechatpay-Nonce")
@@ -131,6 +141,20 @@ func (c MerchantApiClient) doRequestAndVerifySignature(ctx context.Context, meth
 	wechatSerial := rawResp.Header.Get("Wechatpay-Serial")
 	if !VerifyWechatSignature(timestamp, wechatNonce, resp, wechatSignature, c.platformCertMap.GetPublicKey(wechatSerial)) {
 		err = errors.New("resp签名错误")
+		return
+	}
+	return
+}
+
+func buildErrorIfExist(statusCode int, resp []byte) (err error) {
+	if statusCode != 200 && statusCode != 202 && statusCode != 204 {
+		// 微信支付错误
+		wechatErr := ErrBody{}
+		err = json.Unmarshal(resp, &wechatErr)
+		if err != nil {
+			return
+		}
+		err = &wechatErr
 		return
 	}
 	return
@@ -165,6 +189,11 @@ func (c MerchantApiClient) doFormUpload(ctx context.Context, url string, fBytes 
 	}
 	resp, err = ioutil.ReadAll(rawResp.Body)
 	if err != nil {
+		return
+	}
+	err = buildErrorIfExist(rawResp.StatusCode, resp)
+	if err != nil {
+		resp = nil
 		return
 	}
 	// 验证resp签名
