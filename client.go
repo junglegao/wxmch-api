@@ -16,6 +16,14 @@ import (
 )
 
 type MerchantApiClient struct {
+	// platformCertMap 平台证书map
+	platformCertMap PlatformCertificatesMap
+	// 平台证书编号（最新的）
+	platformSerialNo string
+	BaseClient
+}
+
+type BaseClient struct {
 	// 商户号
 	mchId string
 	// 商户api证书序列号
@@ -26,10 +34,6 @@ type MerchantApiClient struct {
 	baseUrl string
 	// timeout 调用微信支付接口超时时间
 	timeout time.Duration
-	// platformCertMap 平台证书map
-	platformCertMap PlatformCertificatesMap
-	// 平台证书编号（最新的）
-	platformSerialNo string
 	//api rsa private key 商户api证书私钥
 	apiPriKey *rsa.PrivateKey
 	// api secret
@@ -39,7 +43,7 @@ type MerchantApiClient struct {
 const maxTimeout = 30 * time.Second
 const minTimeout = 1 * time.Second
 
-func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, baseUrl string, timeout time.Duration, certMap PlatformCertificatesMap, platformNo string, apiSecret string) (client MerchantApiClient) {
+func NewBaseClient(mchID string, certSerialNo string, apiCert string, baseUrl string, timeout time.Duration, apiSecret string) (client BaseClient) {
 	if timeout > maxTimeout {
 		timeout = maxTimeout
 	}
@@ -50,16 +54,24 @@ func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, bas
 	if err != nil {
 		panic("错误的商户证书")
 	}
+	client = BaseClient{
+		mchId:        mchID,
+		certSerialNo: certSerialNo,
+		apiCert:      apiCert,
+		baseUrl:      baseUrl,
+		timeout:      timeout,
+		apiPriKey:    apiPriKey,
+		apiSecret:    apiSecret,
+	}
+	return
+}
+
+func NewMerchantApiClient(mchID string, certSerialNo string, apiCert string, baseUrl string, timeout time.Duration, certMap PlatformCertificatesMap, platformNo string, apiSecret string) (client MerchantApiClient) {
+	baseClient := NewBaseClient(mchID, certSerialNo, apiCert, baseUrl, timeout, apiSecret)
 	client = MerchantApiClient{
-		mchId:            mchId,
-		certSerialNo:     certSerialNo,
-		apiCert:          apiCert,
-		baseUrl:          baseUrl,
-		timeout:          timeout,
 		platformCertMap:  certMap,
 		platformSerialNo: platformNo,
-		apiPriKey:        apiPriKey,
-		apiSecret:        apiSecret,
+		BaseClient:       baseClient,
 	}
 	return
 }
@@ -73,7 +85,7 @@ const ContentTypePNG ContentType = "image/png"
 const ContentTypeJPG ContentType = "image/jpg"
 const ContentTypeBMP ContentType = "image/bmp"
 
-func (c MerchantApiClient) formatAuthorizationHeader(nonce string, ts int, signature string) (auth string) {
+func (c BaseClient) formatAuthorizationHeader(nonce string, ts int, signature string) (auth string) {
 	auth = fmt.Sprintf("%s mchid=\"%s\",nonce_str=\"%s\",serial_no=\"%s\",timestamp=\"%d\",signature=\"%s\"", AUTHTYPE, c.mchId, nonce, c.certSerialNo, ts, signature)
 	return
 }
@@ -82,8 +94,8 @@ func (c MerchantApiClient) getPlatformPublicKey() (pubKey *rsa.PublicKey) {
 	return c.platformCertMap.GetPublicKey(c.platformSerialNo)
 }
 
-// 普通http api请求
-func (c MerchantApiClient) doRequest(ctx context.Context, method string, url string, query string, body []byte) (resp *http.Response, err error) {
+// 普通http api请求，header中有Wechatpay-Serial
+func (c MerchantApiClient) doRequestWithWxSerial(ctx context.Context, method string, url string, query string, body []byte) (resp *http.Response, err error) {
 	nonce := RandStringBytesMaskImprSrc(10)
 	ts := int(time.Now().Unix())
 	signature, _ := CreateSignature(method, url, ts, nonce, body, c.apiPriKey)
@@ -103,13 +115,35 @@ func (c MerchantApiClient) doRequest(ctx context.Context, method string, url str
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Wechatpay-Serial", c.platformSerialNo)
 	resp, err = h.Do(req)
+	return
+}
 
+// 普通http api请求，header中没有Wechatpay-Serial
+func (c BaseClient) doRequestWithOutWxSerial(ctx context.Context, method string, url string, query string, body []byte) (resp *http.Response, err error) {
+	nonce := RandStringBytesMaskImprSrc(10)
+	ts := int(time.Now().Unix())
+	signature, _ := CreateSignature(method, url, ts, nonce, body, c.apiPriKey)
+
+	h := &http.Client{Timeout: c.timeout}
+	var requestUrl string
+	switch query {
+	case "":
+		requestUrl = c.baseUrl + url
+	default:
+		requestUrl = c.baseUrl + url + fmt.Sprintf("?%s", query)
+	}
+	req, _ := http.NewRequestWithContext(ctx, method, requestUrl, bytes.NewBuffer(body))
+	req.Header.Set("Authorization", c.formatAuthorizationHeader(nonce, ts, signature))
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "Mozilla/5.0")
+	req.Header.Set("Content-Type", "application/json")
+	resp, err = h.Do(req)
 	return
 }
 
 // 没有验签功能的api请求
-func (c MerchantApiClient) doRequestWithoutVerifySignature(ctx context.Context, method string, url string, query string, body []byte) (resp []byte, err error) {
-	rawResp, err := c.doRequest(ctx, method, url, query, body)
+func (c BaseClient) doRequestWithoutVerifySignature(ctx context.Context, method string, url string, query string, body []byte) (resp []byte, err error) {
+	rawResp, err := c.doRequestWithOutWxSerial(ctx, method, url, query, body)
 	if err != nil {
 		return
 	}
@@ -127,7 +161,7 @@ func (c MerchantApiClient) doRequestWithoutVerifySignature(ctx context.Context, 
 
 // 带验签功能的api请求
 func (c MerchantApiClient) doRequestAndVerifySignature(ctx context.Context, method string, url string, query string, body []byte) (resp []byte, err error) {
-	rawResp, err := c.doRequest(ctx, method, url, query, body)
+	rawResp, err := c.doRequestWithWxSerial(ctx, method, url, query, body)
 	if err != nil {
 		return
 	}
