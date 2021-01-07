@@ -40,7 +40,7 @@ MediaUpload | 上传图片
 ## 示例
 ```
 // 创建微信支付服务商客户端
-client := NewMerchantApiClient("xxxx", "xxxx", "apiClientCert", "https://api.mch.weixin.qq.com", 5*time.Second, certMap, "xxx")
+client := NewMerchantApiClient("xxxx", "xxxx", "apiClientCert", "https://api.mch.weixin.qq.com", 5*time.Second, certMap, "xxx", "xxxxx")
 file, _ := os.Open("image.png")
-resp, err := client.MediaUpload(MediaUploadRequest{file: file})
+resp, err := client.MediaUpload(MediaUploadRequest{Reader: file})
 ```
