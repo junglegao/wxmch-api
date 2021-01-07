@@ -32,12 +32,14 @@ type MerchantApiClient struct {
 	platformSerialNo string
 	//api rsa private key 商户api证书私钥
 	apiPriKey *rsa.PrivateKey
+	// api secret
+	apiSecret string
 }
 
 const maxTimeout = 30 * time.Second
 const minTimeout = 1 * time.Second
 
-func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, baseUrl string, timeout time.Duration, certMap PlatformCertificatesMap, platformNo string) (client MerchantApiClient) {
+func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, baseUrl string, timeout time.Duration, certMap PlatformCertificatesMap, platformNo string, apiSecret string) (client MerchantApiClient) {
 	if timeout > maxTimeout {
 		timeout = maxTimeout
 	}
@@ -57,6 +59,7 @@ func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, bas
 		platformCertMap:  certMap,
 		platformSerialNo: platformNo,
 		apiPriKey:        apiPriKey,
+		apiSecret:        apiSecret,
 	}
 	return
 }
