@@ -9,7 +9,7 @@ import (
 /*
 	电商收付通提交退款
 	电商收付通查询退款
- */
+*/
 
 type RefundRequest struct {
 	// 二级商户号
@@ -27,12 +27,12 @@ type RefundRequest struct {
 	// 退款原因
 	Reason string `json:"reason"`
 	//订单金额
-	Amount struct{
+	Amount struct {
 		// 退款金额
 		Refund uint `json:"refund"`
 		// 原订单金额
 		Total uint `json:"total"`
-		// 退款币种	
+		// 退款币种
 		Currency string `json:"currency"`
 	} `json:"amount"`
 	// 退款结果回调url
@@ -47,7 +47,7 @@ type RefundResponse struct {
 	// 退款创建时间
 	CreateTime string `json:"create_time"`
 	// 金额信息
-	Amount struct{
+	Amount struct {
 		// 退款金额
 		Refund uint `json:"refund"`
 		// 用户退款金额
@@ -58,7 +58,7 @@ type RefundResponse struct {
 		Currency string `json:"currency"`
 	} `json:"amount"`
 	// 优惠退款详情
-	PromotionDetail []struct{
+	PromotionDetail []struct {
 		// 券ID
 		PromotionID string `json:"promotion_id"`
 		// 优惠范围
@@ -73,10 +73,10 @@ type RefundResponse struct {
 }
 
 // 申请退款
-func (c MerchantApiClient) RefundApply(req RefundRequest) (resp *RefundResponse, err error){
+func (c MerchantApiClient) RefundApply(ctx context.Context, req RefundRequest) (resp *RefundResponse, err error) {
 	url := "/v3/ecommerce/refunds/apply"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
 	if err != nil {
 		return
 	}
@@ -118,7 +118,7 @@ type QueryRefundResponse struct {
 	// 退款状态
 	Status string `json:"status"`
 	// 金额信息
-	Amount struct{
+	Amount struct {
 		// 退款金额
 		Refund uint `json:"refund"`
 		// 用户退款金额
@@ -129,7 +129,7 @@ type QueryRefundResponse struct {
 		Currency string `json:"currency"`
 	} `json:"amount"`
 	// 优惠退款详情
-	PromotionDetail []struct{
+	PromotionDetail []struct {
 		// 券ID
 		PromotionID string `json:"promotion_id"`
 		// 优惠范围
@@ -144,10 +144,10 @@ type QueryRefundResponse struct {
 }
 
 // 通过微信支付退款单号查询退款
-func (c MerchantApiClient) QueryRefundByID(req QueryRefundByIDRequest) (resp *QueryRefundResponse, err error) {
+func (c MerchantApiClient) QueryRefundByID(ctx context.Context, req QueryRefundByIDRequest) (resp *QueryRefundResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/refunds/id/%s", req.RefundID)
 	query := fmt.Sprintf("sub_mchid=%s", req.SubMchID)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
 	if err != nil {
 		return
 	}
@@ -156,10 +156,10 @@ func (c MerchantApiClient) QueryRefundByID(req QueryRefundByIDRequest) (resp *Qu
 }
 
 // 通过商户退款单号查询退款
-func (c MerchantApiClient) QueryRefundByOutRefundNo(req QueryRefundByOutRefundNoRequest) (resp *QueryRefundResponse, err error) {
+func (c MerchantApiClient) QueryRefundByOutRefundNo(ctx context.Context, req QueryRefundByOutRefundNoRequest) (resp *QueryRefundResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/refunds/out-refund-no/%s", req.OutRefundNo)
 	query := fmt.Sprintf("sub_mchid=%s", req.SubMchID)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
 	if err != nil {
 		return
 	}

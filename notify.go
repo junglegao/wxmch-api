@@ -1,7 +1,6 @@
 package wxmch_api
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -9,21 +8,24 @@ import (
 	普通支付通知
 	退款通知
 	分账动账通知
- */
+*/
 // 通知类型枚举
 type EventTypeEnum string
 
 // 支付成功
 const EVENTTYPE_TRANSACTION_SUCCESS EventTypeEnum = "TRANSACTION.SUCCESS"
+
 // 退款成功
 const EVENTTYPE_REFUND_SUCCESS EventTypeEnum = "REFUND.SUCCESS"
+
 // 退款异常
 const EVENTTYPE_REFUND_ABNORMAL EventTypeEnum = "REFUND.ABNORMAL"
+
 // 退款关闭
 const EVENTTYPE_REFUND_CLOSED EventTypeEnum = "REFUND.CLOSED"
+
 // 分账回退
 const EVENTTYPE_TRANSACTION_RETURN EventTypeEnum = "TRANSACTION.RETURN"
-
 
 // 通知报文
 type Notification struct {
@@ -42,7 +44,7 @@ type Notification struct {
 }
 
 // 加密块
-type CipherBlockResource struct{
+type CipherBlockResource struct {
 	// 加密算法类型
 	Algorithm string `json:"algorithm"`
 	// 数据密文
@@ -57,9 +59,9 @@ func (c MerchantApiClient) GetResourcePlainText(r CipherBlockResource) (plainTex
 	switch r.Algorithm {
 	case "AEAD_AES_256_GCM":
 		plainText = decryptCiphertextWithGCM(r.AssociatedData, r.Nonce, r.Ciphertext, c.apiCert)
-		break
 	default:
-		err = errors.New(fmt.Sprintf("algorithm:%s not supported", r.Algorithm))
+		err = fmt.Errorf("algorithm:%s not supported", r.Algorithm)
+		return
 	}
 	return
 }
@@ -91,14 +93,14 @@ type PayNotification struct {
 	// 支付完成时间
 	SuccessTime string `json:"success_time"`
 	// 支付者
-	Payer struct{
+	Payer struct {
 		// 用户服务标识
 		SpOpenID string `json:"sp_openid"`
 		// 用户子标识
 		SubOpenID string `json:"sub_openid"`
 	} `json:"payer"`
 	// 订单金额
-	Amount struct{
+	Amount struct {
 		// 总金额
 		Total uint `json:"total"`
 		// 用户支付金额
@@ -109,12 +111,12 @@ type PayNotification struct {
 		PayerCurrency string `json:"payer_currency"`
 	} `json:"amount"`
 	// 场景信息
-	SceneInfo struct{
+	SceneInfo struct {
 		// 商户端设备号
 		DeviceID string `json:"device_id"`
 	} `json:"scene_info"`
 	// 优惠功能
-	PromotionDetail struct{
+	PromotionDetail struct {
 		// 券ID
 		CouponID string `json:"coupon_id"`
 		// 优惠名称
@@ -136,7 +138,7 @@ type PayNotification struct {
 		// 优惠币种
 		Currency string `json:"currency"`
 		// 单品列表
-		GoodsDetail []struct{
+		GoodsDetail []struct {
 			// 商品编码
 			GoodsID string `json:"goods_id"`
 			// 商品数量
@@ -172,14 +174,14 @@ type RefundNotification struct {
 	// 退款入账账户
 	UserReceivedAccount string `json:"user_received_account"`
 	// 金额信息
-	Amount struct{
+	Amount struct {
 		// 订单金额
 		Total uint `json:"total"`
 		// 退款金额
 		Refund uint `json:"refund"`
 		// 用户支付金额
 		PayerTotal uint `json:"payer_total"`
-		// 用户退款金额	
+		// 用户退款金额
 		PayerRefund uint `json:"payer_refund"`
 	} `json:"amount"`
 }
@@ -198,8 +200,8 @@ type ProfitSharingNotification struct {
 	OrderID string `json:"order_id"`
 	// 商户分账/回退单号
 	OutOrderNo string `json:"out_order_no"`
-	// 分账接收方列表	
-	Receivers []struct{
+	// 分账接收方列表
+	Receivers []struct {
 		// 分账接收方类型
 		Type string `json:"type"`
 		// 分账接收方帐号
@@ -209,7 +211,6 @@ type ProfitSharingNotification struct {
 		// 分账/回退描述
 		Description string `json:"description"`
 	} `json:"receivers"`
-	// 成功时间	
+	// 成功时间
 	SuccessTime string `json:"success_time"`
-
 }

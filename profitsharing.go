@@ -3,7 +3,6 @@ package wxmch_api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 )
 
@@ -15,7 +14,7 @@ import (
 		查询分账回退结果
 		查询剩余待分账金额
 		分账完结
- */
+*/
 
 // 请求分账参数
 type ProfitShareApplyRequest struct {
@@ -28,7 +27,7 @@ type ProfitShareApplyRequest struct {
 	//商户分账单号
 	OutOrderNo string `json:"out_order_no"`
 	// 分账接收方列表
-	Receivers []struct{
+	Receivers []struct {
 		// 分账接收方类型
 		Type string `json:"type"`
 		// 分账接收方帐号
@@ -56,10 +55,10 @@ type ProfitShareApplyResponse struct {
 }
 
 // 请求分账API
-func (c MerchantApiClient) ProfitShareApply(req ProfitShareApplyRequest) (resp *ProfitShareApplyResponse, err error) {
+func (c MerchantApiClient) ProfitShareApply(ctx context.Context, req ProfitShareApplyRequest) (resp *ProfitShareApplyResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/orders"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
 	if err != nil {
 		return
 	}
@@ -88,7 +87,7 @@ type ProfitShareQueryResponse struct {
 	// 分账单状态
 	Status string `json:"status"`
 	// 分账接收方列表
-	Receivers []struct{
+	Receivers []struct {
 		// 分账接收商户号
 		ReceiverMchID string `json:"receiver_mchid"`
 		// 分账金额
@@ -99,13 +98,13 @@ type ProfitShareQueryResponse struct {
 		Result string `json:"result"`
 		// 完成时间
 		FinishTime string `json:"finish_time"`
-		// 分账失败原因 
+		// 分账失败原因
 		FailReason string `json:"fail_reason"`
 		// 分账接收方类型
 		Type string `json:"type"`
 		// 分账接收方帐号
 		Account string `json:"receiver_account"`
-	}  `json:"receivers"`
+	} `json:"receivers"`
 	// 关单原因
 	CloseReason string `json:"close_reason"`
 	// 分账完结金额
@@ -115,10 +114,10 @@ type ProfitShareQueryResponse struct {
 }
 
 // 查询分账结果API
-func (c MerchantApiClient) ProfitShareQuery(req ProfitShareQueryRequest) (resp *ProfitShareQueryResponse, err error) {
+func (c MerchantApiClient) ProfitShareQuery(ctx context.Context, req ProfitShareQueryRequest) (resp *ProfitShareQueryResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/orders"
 	query := fmt.Sprintf("sub_mchid=%s&transaction_id=%s&out_order_no=%s", req.SubMchID, req.TransactionID, req.OutOrderNo)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
 	if err != nil {
 		return
 	}
@@ -137,7 +136,7 @@ type ProfitReturnApplyRequest struct {
 	// 商户回退单号
 	OutReturnNo string `json:"out_return_no"`
 	// 回退商户号
-	ReturnMchID	string `json:"return_mchid"`
+	ReturnMchID string `json:"return_mchid"`
 	// 回退金额
 	Amount uint `json:"amount"`
 	// 回退描述
@@ -155,7 +154,7 @@ type ProfitReturnApplyResponse struct {
 	// 商户回退单号
 	OutReturnNo string `json:"out_return_no"`
 	// 回退商户号
-	ReturnMchID	string `json:"return_mchid"`
+	ReturnMchID string `json:"return_mchid"`
 	// 回退金额
 	Amount uint `json:"amount"`
 	// 微信回退单号
@@ -169,10 +168,10 @@ type ProfitReturnApplyResponse struct {
 }
 
 // 请求分账回退API
-func (c MerchantApiClient) ProfitReturnApply(req ProfitReturnApplyRequest) (resp *ProfitReturnApplyResponse, err error) {
+func (c MerchantApiClient) ProfitReturnApply(ctx context.Context, req ProfitReturnApplyRequest) (resp *ProfitReturnApplyResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/returnorders"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
 	if err != nil {
 		return
 	}
@@ -202,7 +201,7 @@ type ProfitReturnQueryResponse struct {
 	// 商户回退单号
 	OutReturnNo string `json:"out_return_no"`
 	// 回退商户号
-	ReturnMchID	string `json:"return_mchid"`
+	ReturnMchID string `json:"return_mchid"`
 	// 回退金额
 	Amount uint `json:"amount"`
 	// 微信回退单号
@@ -216,11 +215,11 @@ type ProfitReturnQueryResponse struct {
 }
 
 // 查询分账回退结果API
-func (c MerchantApiClient) ProfitReturnQuery(req ProfitReturnQueryRequest) (resp ProfitReturnQueryResponse, err error)  {
+func (c MerchantApiClient) ProfitReturnQuery(ctx context.Context, req ProfitReturnQueryRequest) (resp ProfitReturnQueryResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/returnorders"
 	query := fmt.Sprintf("sub_mchid=%s&out_return_no=%s", req.SubMchID, req.OutReturnNo)
 	if req.OutOrderNo == "" && req.OrderID == "" {
-		err = errors.New(fmt.Sprintf("out_order_no和order_id不能同时为空"))
+		err = fmt.Errorf("out_order_no和order_id不能同时为空")
 		return
 	}
 	if req.OutOrderNo != "" {
@@ -229,7 +228,7 @@ func (c MerchantApiClient) ProfitReturnQuery(req ProfitReturnQueryRequest) (resp
 	if req.OrderID != "" {
 		query += fmt.Sprintf("&order_id=%s", req.OrderID)
 	}
-	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
 	if err != nil {
 		return
 	}
@@ -252,9 +251,9 @@ type ProfitShareUnSplitAmountQueryResponse struct {
 }
 
 // 查询订单剩余待分金额API
-func (c MerchantApiClient) ProfitShareUnSplitAmountQuery(req ProfitShareUnSplitAmountQueryRequest) (resp *ProfitShareUnSplitAmountQueryResponse, err error) {
+func (c MerchantApiClient) ProfitShareUnSplitAmountQuery(ctx context.Context, req ProfitShareUnSplitAmountQueryRequest) (resp *ProfitShareUnSplitAmountQueryResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/profitsharing/orders/%s/amounts", req.TransactionID)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, "query", nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, "query", nil)
 	if err != nil {
 		return
 	}
@@ -287,10 +286,10 @@ type ProfitShareFinishResponse struct {
 }
 
 // 完结分账API
-func (c MerchantApiClient) ProfitShareFinish(req ProfitShareFinishRequest) (resp *ProfitShareFinishResponse, err error) {
+func (c MerchantApiClient) ProfitShareFinish(ctx context.Context, req ProfitShareFinishRequest) (resp *ProfitShareFinishResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/finish-order"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", url, "query", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "query", body)
 	if err != nil {
 		return
 	}

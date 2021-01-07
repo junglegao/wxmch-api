@@ -13,12 +13,13 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"golang.org/x/crypto/pkcs12"
 	"strings"
+
+	"golang.org/x/crypto/pkcs12"
 )
 
 // 生成rsa私钥
-func buildRSAPrivateKey(keyContent string) (priKey *rsa.PrivateKey, err error){
+func buildRSAPrivateKey(keyContent string) (priKey *rsa.PrivateKey, err error) {
 	block, _ := pem.Decode([]byte(keyContent))
 	if block == nil {
 		err = errors.New("private key error")
@@ -37,7 +38,7 @@ func buildRSAPrivateKey(keyContent string) (priKey *rsa.PrivateKey, err error){
 }
 
 // 生成API调用时需要的签名
-func CreateSignature(method string,  url string, ts int, nounce string, body []byte, priKey *rsa.PrivateKey) (signature string, err error) {
+func CreateSignature(method string, url string, ts int, nounce string, body []byte, priKey *rsa.PrivateKey) (signature string, err error) {
 	// 签名前的字符串
 	sBeforeSign := strings.Join([]string{method, url, fmt.Sprintf("%d", ts), nounce}, "\n") + "\n"
 	if method == "GET" {
@@ -47,7 +48,7 @@ func CreateSignature(method string,  url string, ts int, nounce string, body []b
 	}
 
 	h := sha256.New()
-	h.Write([]byte(sBeforeSign))
+	_, _ = h.Write([]byte(sBeforeSign))
 	hashed := h.Sum(nil)
 
 	sign, err := rsa.SignPKCS1v15(rand.Reader, priKey, crypto.SHA256, hashed)
@@ -69,7 +70,7 @@ func VerifyWechatSignature(ts string, nonce string, body []byte, b64Sig string, 
 	}
 	// 对签名字符串进行hash
 	h := sha256.New()
-	h.Write([]byte(sBeforeSign))
+	_, _ = h.Write([]byte(sBeforeSign))
 	hashed := h.Sum(nil)
 	verifyErr := rsa.VerifyPKCS1v15(pub, crypto.SHA256, hashed, signature)
 	if verifyErr != nil {
@@ -81,7 +82,7 @@ func VerifyWechatSignature(ts string, nonce string, body []byte, b64Sig string, 
 }
 
 // 用于平台证书解密和回调报文的解密
-func decryptCiphertextWithGCM(associatedData string, nonce string, ciphertext string, apiSecret string) (plaintext []byte){
+func decryptCiphertextWithGCM(associatedData string, nonce string, ciphertext string, apiSecret string) (plaintext []byte) {
 	ct, _ := base64.StdEncoding.DecodeString(ciphertext)
 	nc := []byte(nonce)
 	block, err := aes.NewCipher([]byte(apiSecret))
@@ -104,7 +105,7 @@ func decryptCiphertextWithGCM(associatedData string, nonce string, ciphertext st
 // 从平台证书中获取公钥
 func GetKeyFromCertificate(certContent string) (rsaPublicKey *rsa.PublicKey) {
 	block, _ := pem.Decode([]byte(certContent))
-	var cert* x509.Certificate
+	var cert *x509.Certificate
 	cert, _ = x509.ParseCertificate(block.Bytes)
 	rsaPublicKey = cert.PublicKey.(*rsa.PublicKey)
 	return

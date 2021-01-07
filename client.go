@@ -34,8 +34,8 @@ type MerchantApiClient struct {
 	apiPriKey *rsa.PrivateKey
 }
 
-const maxTimeout = 30*time.Second
-const minTimeout = 1*time.Second
+const maxTimeout = 30 * time.Second
+const minTimeout = 1 * time.Second
 
 func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, baseUrl string, timeout time.Duration, certMap PlatformCertificatesMap, platformNo string) (client MerchantApiClient) {
 	if timeout > maxTimeout {
@@ -49,21 +49,21 @@ func NewMerchantApiClient(mchId string, certSerialNo string, apiCert string, bas
 		panic("错误的商户证书")
 	}
 	client = MerchantApiClient{
-		mchId:           mchId,
-		certSerialNo:    certSerialNo,
-		apiCert:         apiCert,
-		baseUrl:         baseUrl,
-		timeout:         timeout,
-		platformCertMap: certMap,
+		mchId:            mchId,
+		certSerialNo:     certSerialNo,
+		apiCert:          apiCert,
+		baseUrl:          baseUrl,
+		timeout:          timeout,
+		platformCertMap:  certMap,
 		platformSerialNo: platformNo,
-		apiPriKey : apiPriKey,
+		apiPriKey:        apiPriKey,
 	}
 	return
 }
 
-
 const AUTHTYPE = "WECHATPAY2-SHA256-RSA2048"
 const BOUNDARY = "boundary"
+
 type ContentType string
 
 const ContentTypePNG ContentType = "image/png"
@@ -86,11 +86,14 @@ func (c MerchantApiClient) doRequest(ctx context.Context, method string, url str
 	signature, _ := CreateSignature(method, url, ts, nonce, body, c.apiPriKey)
 
 	h := &http.Client{Timeout: c.timeout}
-	requestUrl := c.baseUrl+url
-	if query != "" {
-		requestUrl += fmt.Sprintf("?%s", query)
+	var requestUrl string
+	switch query {
+	case "":
+		requestUrl = c.baseUrl + url
+	default:
+		requestUrl = c.baseUrl + url + fmt.Sprintf("?%s", query)
 	}
-	req, _ := http.NewRequestWithContext(ctx, method, c.baseUrl+url, bytes.NewBuffer(body))
+	req, _ := http.NewRequestWithContext(ctx, method, requestUrl, bytes.NewBuffer(body))
 	req.Header.Set("Authorization", c.formatAuthorizationHeader(nonce, ts, signature))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "Mozilla/5.0")
@@ -120,7 +123,7 @@ func (c MerchantApiClient) doRequestWithoutVerifySignature(ctx context.Context, 
 }
 
 // 带验签功能的api请求
-func (c MerchantApiClient) doRequestAndVerifySignature(ctx context.Context, method string, url string, query string, body []byte) (resp []byte, err error){
+func (c MerchantApiClient) doRequestAndVerifySignature(ctx context.Context, method string, url string, query string, body []byte) (resp []byte, err error) {
 	rawResp, err := c.doRequest(ctx, method, url, query, body)
 	if err != nil {
 		return
@@ -168,7 +171,7 @@ func (c MerchantApiClient) doFormUpload(ctx context.Context, url string, fBytes 
 	hash := sha256.Sum256(fBytes)
 	meta := struct {
 		Filename string `json:"filename"`
-		Sha256 string `json:"sha256"`
+		Sha256   string `json:"sha256"`
 	}{
 		Filename: fName,
 		Sha256:   hex.EncodeToString(hash[:]),
@@ -177,7 +180,7 @@ func (c MerchantApiClient) doFormUpload(ctx context.Context, url string, fBytes 
 	signature, _ := CreateSignature("POST", url, ts, nonce, metaStr, c.apiPriKey)
 	reqBody := fmt.Sprintf("--%s\r\nContent-Disposition: form-data; name=\"meta\";\r\nContent-Type: application/json\r\n\r\n%s\r\n--%s\r\nContent-Disposition: form-data; name=\"file\"; filename=\"%s\";\r\nContent-Type: %s\r\n\r\n%s\r\n--%s--", BOUNDARY, metaStr, BOUNDARY, fName, fileType, fBytes, BOUNDARY)
 	h := &http.Client{Timeout: c.timeout}
-	requestUrl := c.baseUrl+url
+	requestUrl := c.baseUrl + url
 	req, _ := http.NewRequestWithContext(ctx, "POST", requestUrl, strings.NewReader(reqBody))
 	req.Header.Set("Content-Type", fmt.Sprintf("multipart/form-data;boundary=%s", BOUNDARY))
 	req.Header.Set("Authorization", c.formatAuthorizationHeader(nonce, ts, signature))

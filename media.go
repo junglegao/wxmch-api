@@ -30,14 +30,15 @@ const PNGSuffix ImageFileSuffix = "png"
 const BMPSuffix ImageFileSuffix = "bmp"
 
 // 图片上传API
-func (c MerchantApiClient) MediaUpload (req MediaUploadRequest) (resp *MediaUploadResponse, err error) {
+func (c MerchantApiClient) MediaUpload(ctx context.Context, req MediaUploadRequest) (resp *MediaUploadResponse, err error) {
 	// 图片大小不能超过2M，只支持JPG、BMP、PNG格式,
 	fBytes, err := ioutil.ReadAll(req.Reader)
 	if err != nil {
 		return
 	}
-	if len(fBytes)> 2*1024*1024 {
+	if len(fBytes) > 2*1024*1024 {
 		err = errors.New("图片大小不能超过2M")
+		return
 	}
 	// io reader cannot read multiple times
 	_, format, err := image.DecodeConfig(bytes.NewReader(fBytes))
@@ -50,20 +51,17 @@ func (c MerchantApiClient) MediaUpload (req MediaUploadRequest) (resp *MediaUplo
 	case "jpg":
 		ctype = ContentTypeJPG
 		suffix = JPGSuffix
-		break
 	case "bmp":
 		ctype = ContentTypeBMP
 		suffix = BMPSuffix
-		break
 	case "png":
 		ctype = ContentTypePNG
 		suffix = PNGSuffix
-		break
 	default:
-		err = errors.New(fmt.Sprintf("不支持的图片格式:%s", format))
+		err = fmt.Errorf("不支持的图片格式:%s", format)
 		return
 	}
-	res, err := c.doFormUpload(context.Background(),  "/v3/merchant/media/upload", fBytes, "image."+string(suffix), ctype)
+	res, err := c.doFormUpload(ctx, "/v3/merchant/media/upload", fBytes, "image."+string(suffix), ctype)
 	if err != nil {
 		return
 	}

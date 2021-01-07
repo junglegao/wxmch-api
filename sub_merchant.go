@@ -14,7 +14,7 @@ type SubmitApplymentResp struct {
 	OutRequestNo string `json:"out_request_no"`
 }
 
-type BusinessLicenseInfo struct{
+type BusinessLicenseInfo struct {
 	// 证件扫描件 - MediaID
 	BusinessLicenseCopy string `json:"business_license_copy"`
 	// 证件注册号
@@ -29,7 +29,7 @@ type BusinessLicenseInfo struct{
 	BusinessTime string `json:"business_time,omitempty"`
 }
 
-type OrganizationCertInfo struct{
+type OrganizationCertInfo struct {
 	// 组织机构代码证照片
 	OrganizationCopy string `json:"organization_copy"`
 	// 组织机构代码
@@ -38,7 +38,7 @@ type OrganizationCertInfo struct{
 	OrganizationTime string `json:"organization_time"`
 }
 
-type IDCardInfo struct{
+type IDCardInfo struct {
 	// 身份证人像面照片
 	IDCardCopy string `json:"id_card_copy"`
 	// 身份证国徽面照片
@@ -51,7 +51,7 @@ type IDCardInfo struct{
 	IDCardValidTime string `json:"id_card_valid_time"`
 }
 
-type IDDocInfo struct{
+type IDDocInfo struct {
 	// 证件姓名
 	IDDocName string `json:"id_doc_name"`
 	// 证件号码
@@ -62,7 +62,7 @@ type IDDocInfo struct{
 	DocPeriodEnd string `json:"doc_period_end"`
 }
 
-type AccountInfo struct{
+type AccountInfo struct {
 	// 账户类型
 	BankAccountType string `json:"bank_account_type"`
 	// 开户银行
@@ -79,7 +79,7 @@ type AccountInfo struct{
 	AccountNumber string `json:"account_number"`
 }
 
-type ContactInfo struct{
+type ContactInfo struct {
 	// 超级管理员类型
 	ContactType string `json:"contact_type"`
 	// 超级管理员姓名
@@ -92,7 +92,7 @@ type ContactInfo struct{
 	ContactEmail string `json:"contact_email,omitempty"`
 }
 
-type SalesSceneInfo struct{
+type SalesSceneInfo struct {
 	// 店铺名称
 	StoreName string `json:"store_name"`
 	// 店铺链接
@@ -137,7 +137,7 @@ type SubmitApplymentRequest struct {
 }
 
 // 二级商户进件
-func (c MerchantApiClient) ApplymentSubmit(req SubmitApplymentRequest) (resp *SubmitApplymentResp, err error) {
+func (c MerchantApiClient) ApplymentSubmit(ctx context.Context, req SubmitApplymentRequest) (resp *SubmitApplymentResp, err error) {
 	// 法人身份证姓名和号码需要加密
 	pubKey := c.getPlatformPublicKey()
 	req.IDCardInfo.IDCardName = encryptCiphertext(req.IDCardInfo.IDCardName, pubKey)
@@ -146,14 +146,14 @@ func (c MerchantApiClient) ApplymentSubmit(req SubmitApplymentRequest) (resp *Su
 	req.ContactInfo.ContactName = encryptCiphertext(req.ContactInfo.ContactName, pubKey)
 	req.ContactInfo.ContactIDCardNumber = encryptCiphertext(req.ContactInfo.ContactIDCardNumber, pubKey)
 	req.ContactInfo.MobilePhone = encryptCiphertext(req.ContactInfo.MobilePhone, pubKey)
-	if req.ContactInfo.ContactEmail != ""{
+	if req.ContactInfo.ContactEmail != "" {
 		req.ContactInfo.ContactEmail = encryptCiphertext(req.ContactInfo.ContactEmail, pubKey)
 	}
 	// 法人其他证件信息（选传）如果有，需要加密
-	if req.IDDocInfo != nil && req.IDDocInfo.IDDocName != ""{
+	if req.IDDocInfo != nil && req.IDDocInfo.IDDocName != "" {
 		req.IDDocInfo.IDDocName = encryptCiphertext(req.IDDocInfo.IDDocName, pubKey)
 	}
-	if req.IDDocInfo!= nil && req.IDDocInfo.IDDocNumber != "" {
+	if req.IDDocInfo != nil && req.IDDocInfo.IDDocNumber != "" {
 		req.IDDocInfo.IDDocNumber = encryptCiphertext(req.IDDocInfo.IDDocNumber, pubKey)
 	}
 	// 结算银行账户 如果有，需要加密
@@ -163,7 +163,7 @@ func (c MerchantApiClient) ApplymentSubmit(req SubmitApplymentRequest) (resp *Su
 	}
 
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", "/v3/ecommerce/applyments/", "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", "/v3/ecommerce/applyments/", "", body)
 	if err != nil {
 		return
 	}
@@ -192,7 +192,7 @@ type ApplymentQueryResponse struct {
 	// 电商平台二级商户号
 	SubMchID string `json:"sub_mchid"`
 	// 汇款账户验证信息
-	AccountValidation struct{
+	AccountValidation struct {
 		// 付款户名
 		AccountName string `json:"account_name"`
 		// 付款卡号
@@ -213,7 +213,7 @@ type ApplymentQueryResponse struct {
 		Deadline string `json:"deadline"`
 	} `json:"account_validation"`
 	// 驳回原因详情
-	AuditDetail []struct{
+	AuditDetail []struct {
 		// 参数名称
 		ParamName string `json:"param_name"`
 		// 驳回原因
@@ -230,7 +230,7 @@ type ApplymentQueryResponse struct {
 const AccountNeedVerifyState = `ACCOUNT_NEED_VERIFY`
 
 // 申请单查询结果脱敏
-func (r *ApplymentQueryResponse) desensitize(priKey *rsa.PrivateKey) (err error){
+func (r *ApplymentQueryResponse) desensitize(priKey *rsa.PrivateKey) (err error) {
 	// -汇款账户验证信息 当申请状态为ACCOUNT_NEED_VERIFY 时有返回，可根据指引汇款，完成账户验证。
 	// 付款户名和付款卡号需要脱敏
 	if r.ApplymentState == AccountNeedVerifyState {
@@ -247,9 +247,9 @@ func (r *ApplymentQueryResponse) desensitize(priKey *rsa.PrivateKey) (err error)
 }
 
 // 通过申请单ID查询申请状态
-func (c MerchantApiClient) ApplymentQueryByID(req QueryApplymentByIDRequest) (resp *ApplymentQueryResponse, err error) {
+func (c MerchantApiClient) ApplymentQueryByID(ctx context.Context, req QueryApplymentByIDRequest) (resp *ApplymentQueryResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/applyments/%d", req.ApplymentID)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, "", nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, "", nil)
 	if err != nil {
 		return
 	}
@@ -265,9 +265,9 @@ func (c MerchantApiClient) ApplymentQueryByID(req QueryApplymentByIDRequest) (re
 }
 
 // 通过业务申请编号查询申请状态
-func (c MerchantApiClient) ApplymentQueryByOutRequestNo(req QueryApplymentByOutRequestNoRequest) (resp *ApplymentQueryResponse, err error) {
+func (c MerchantApiClient) ApplymentQueryByOutRequestNo(ctx context.Context, req QueryApplymentByOutRequestNoRequest) (resp *ApplymentQueryResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/applyments/out-request-no/%s", req.OutRequestNo)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, "", nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, "", nil)
 	if err != nil {
 		return
 	}
@@ -300,10 +300,10 @@ type ModifySettlementRequest struct {
 }
 
 // 修改结算帐号API
-func (c MerchantApiClient) SettlementModify(req ModifySettlementRequest) (err error) {
+func (c MerchantApiClient) SettlementModify(ctx context.Context, req ModifySettlementRequest) (err error) {
 	url := fmt.Sprintf("/v3/apply4sub/sub_merchants/%s/modify-settlement", req.SubMchID)
 	body, _ := json.Marshal(&req)
-	_, err = c.doRequestAndVerifySignature(context.Background(), "POST", url, "", body)
+	_, err = c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
 	if err != nil {
 		return
 	}
@@ -331,9 +331,9 @@ type QuerySettlementResponse struct {
 }
 
 // 查询结算账户API
-func (c MerchantApiClient) SettlementQuery(req QuerySettlementRequest) (resp *QuerySettlementResponse, err error) {
+func (c MerchantApiClient) SettlementQuery(ctx context.Context, req QuerySettlementRequest) (resp *QuerySettlementResponse, err error) {
 	url := fmt.Sprintf("/v3/apply4sub/sub_merchants/%s/settlement", req.SubMchID)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, "", nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, "", nil)
 	if err != nil {
 		return
 	}
