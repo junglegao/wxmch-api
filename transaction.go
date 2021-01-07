@@ -34,9 +34,9 @@ type JsApiPrepayRequest struct {
 	// 结算信息
 	SettleInfo struct{
 		// 是否指定分账
-		ProfitSharing string `json:"profit_sharing"`
+		ProfitSharing bool `json:"profit_sharing"`
 		// 补差金额
-		SubsidyAmount string `json:"subsidy_amount"`
+		SubsidyAmount int `json:"subsidy_amount"`
 	} `json:"settle_info"`
 	// 订单金额
 	Amount struct{

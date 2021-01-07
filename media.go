@@ -15,7 +15,7 @@ import (
 )
 
 type MediaUploadRequest struct {
-	file io.Reader
+	Reader io.Reader
 }
 
 type MediaUploadResponse struct {
@@ -32,7 +32,7 @@ const BMPSuffix ImageFileSuffix = "bmp"
 // 图片上传API
 func (c MerchantApiClient) MediaUpload (req MediaUploadRequest) (resp *MediaUploadResponse, err error) {
 	// 图片大小不能超过2M，只支持JPG、BMP、PNG格式,
-	fBytes, err := ioutil.ReadAll(req.file)
+	fBytes, err := ioutil.ReadAll(req.Reader)
 	if err != nil {
 		return
 	}
