@@ -97,7 +97,18 @@ type PrepayPayResponse struct {
 	PrepayID string `json:"prepay_id"`
 }
 
-type JsApiPrepayResponse struct {
+type JsApiPayRequest struct {
+	// 服务商app_id
+	AppID string
+	// 时间戳
+	TimeStamp string
+	// 随机字符串
+	Nonce string
+	// prepay_id
+	Package string
+}
+
+type JsApiPayResponse struct {
 	// 服务商app_id
 	AppID string
 	// 时间戳
@@ -252,5 +263,22 @@ func (c MerchantApiClient) PayResultQueryByOutRequestNo(ctx context.Context, req
 		return
 	}
 	err = json.Unmarshal(res, &resp)
+	return
+}
+
+// 生成JSAPI调起起支付的request结构体
+func (c MerchantApiClient) GenJsApiPayRequest(req JsApiPayRequest) (resp *JsApiPayResponse, err error) {
+	paySign, err := createPaySign(c.apiPriKey, req.AppID, req.TimeStamp, RandStringBytesMaskImprSrc(10), req.Package)
+	if err != nil {
+		return
+	}
+	resp = &JsApiPayResponse{
+		AppID:     req.AppID,
+		TimeStamp: req.TimeStamp,
+		Nonce:     req.Nonce,
+		Package:   req.Package,
+		SignType:  "RSA",
+		PaySign:   paySign,
+	}
 	return
 }
