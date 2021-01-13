@@ -64,7 +64,7 @@ func sha256WithRSA(sBeforeSign string, priKey *rsa.PrivateKey) (signature string
 	return
 }
 
-func createPaySign(priKey *rsa.PrivateKey, args ...string) (paySign string, err error) {
+func CreatePaySign(priKey *rsa.PrivateKey, args ...string) (paySign string, err error) {
 	sBeforeSign := strings.Join(args, "\n")
 	sBeforeSign += "\n"
 	paySign, err = sha256WithRSA(sBeforeSign, priKey)

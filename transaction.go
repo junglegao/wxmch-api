@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
-	"time"
 )
 
 /*
@@ -115,31 +113,17 @@ type JsApiPrepayResponse struct {
 }
 
 // JSAPI下单API
-func (c MerchantApiClient) JsApiPrepay(ctx context.Context, req JsApiPrepayRequest) (resp *JsApiPrepayResponse, err error) {
+func (c MerchantApiClient) JsApiPrepay(ctx context.Context, req JsApiPrepayRequest) (resp *PrepayPayResponse, err error) {
 	url := "/v3/pay/partner/transactions/jsapi"
 	body, _ := json.Marshal(&req)
 	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
 	if err != nil {
 		return
 	}
-	preResp := PrepayPayResponse{}
-	err = json.Unmarshal(res, &preResp)
+	err = json.Unmarshal(res, &resp)
 	if err != nil {
 		return
 	}
-
-	resp = &JsApiPrepayResponse{
-		AppID:     req.SpAppID,
-		TimeStamp: strconv.Itoa(int(time.Now().Unix())),
-		Nonce:     RandStringBytesMaskImprSrc(10),
-		Package:   preResp.PrepayID,
-		SignType:  "RSA",
-	}
-	paySign, err := createPaySign(c.apiPriKey, resp.AppID, resp.TimeStamp, resp.Nonce, resp.Package)
-	if err != nil {
-		return
-	}
-	resp.PaySign = paySign
 	return
 }
 
