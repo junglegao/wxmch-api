@@ -8,7 +8,7 @@ import (
 
 /*
 	电商收付通普通支付
- */
+*/
 
 type JsApiPrepayRequest struct {
 	// 服务商公众号ID
@@ -32,34 +32,34 @@ type JsApiPrepayRequest struct {
 	// 订单优惠标记
 	GoodsTag string `json:"goods_tag"`
 	// 结算信息
-	SettleInfo struct{
+	SettleInfo struct {
 		// 是否指定分账
 		ProfitSharing bool `json:"profit_sharing"`
 		// 补差金额
 		SubsidyAmount int `json:"subsidy_amount"`
 	} `json:"settle_info"`
 	// 订单金额
-	Amount struct{
+	Amount struct {
 		// 总金额
 		Total uint `json:"total"`
 		// 货币类型
 		Currency string `json:"currency"`
 	} `json:"amount"`
 	// 支付者
-	Payer struct{
+	Payer struct {
 		// 用户服务标识
 		SpOpenID string `json:"sp_openid"`
 		// 用户子标识
 		SubOpenID string `json:"sub_openid"`
 	} `json:"payer"`
 	// 优惠功能
-	Detail struct{
+	Detail struct {
 		// 订单原价
 		CostPrice uint `json:"cost_price"`
 		// 商品小票ID
 		InvoiceID string `json:"invoice_id"`
 		// 单品列表
-		GoodsDetail []struct{
+		GoodsDetail []struct {
 			// 商户侧商品编码
 			MerchantGoodsID string `json:"merchant_goods_id"`
 			// 微信侧商品编码
@@ -68,18 +68,18 @@ type JsApiPrepayRequest struct {
 			GoodsName string `json:"goods_name"`
 			// 商品数量
 			Quantity uint `json:"quantity"`
-			// 商品单价	
+			// 商品单价
 			UnitPrice uint `json:"unit_price"`
 		} `json:"goods_detail"`
 	} `json:"detail"`
 	// 场景信息
-	SceneInfo struct{
+	SceneInfo struct {
 		// 用户终端IP
 		PayerClientIP string `json:"payer_client_ip"`
 		// 商户端设备号
 		DeviceID string `json:"device_id"`
 		// 商户门店信息
-		StoreInfo struct{
+		StoreInfo struct {
 			// 门店编号
 			ID string `json:"id"`
 			// 门店名称
@@ -88,7 +88,7 @@ type JsApiPrepayRequest struct {
 			AreaCode string `json:"area_code"`
 			// 详细地址
 			Address string `json:"address"`
- 		} `json:"store_info"`
+		} `json:"store_info"`
 	} `json:"scene_info"`
 }
 
@@ -98,10 +98,10 @@ type PrepayPayResponse struct {
 }
 
 // JSAPI下单API
-func (c MerchantApiClient) JsApiPrepay(req JsApiPrepayRequest) (resp *PrepayPayResponse, err error) {
+func (c MerchantApiClient) JsApiPrepay(ctx context.Context, req JsApiPrepayRequest) (resp *PrepayPayResponse, err error) {
 	url := "/v3/pay/partner/transactions/jsapi"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
 	if err != nil {
 		return
 	}
@@ -138,9 +138,9 @@ type QueryPayResultResponse struct {
 	SubMchID string `json:"sub_mchid"`
 	// 商户订单号
 	OutTradeNo string `json:"out_trade_no"`
-	// 微信支付订单号	
+	// 微信支付订单号
 	TransactionID string `json:"transaction_id"`
-	// 交易类型	
+	// 交易类型
 	TradeType string `json:"trade_type"`
 	// 交易状态
 	TradeState string `json:"trade_state"`
@@ -153,14 +153,14 @@ type QueryPayResultResponse struct {
 	// 支付完成时间
 	SuccessTime string `json:"success_time"`
 	// 支付者
-	Payer struct{
+	Payer struct {
 		// 用户服务标识
 		SpOpenID string `json:"sp_openid"`
 		// 用户子标识
 		SubOpenID string `json:"sub_openid"`
 	} `json:"payer"`
 	// 订单金额
-	Amount struct{
+	Amount struct {
 		// 总金额
 		Total uint `json:"total"`
 		// 用户支付金额
@@ -171,12 +171,12 @@ type QueryPayResultResponse struct {
 		PayerCurrency string `json:"payer_currency"`
 	} `json:"amount"`
 	// 场景信息
-	SceneInfo struct{
+	SceneInfo struct {
 		// 商户端设备号
 		DeviceID string `json:"device_id"`
 	} `json:"scene_info"`
 	// 优惠功能
-	PromotionDetail struct{
+	PromotionDetail struct {
 		// 券ID
 		CouponID string `json:"coupon_id"`
 		// 优惠名称
@@ -185,7 +185,7 @@ type QueryPayResultResponse struct {
 		Scope string `json:"scope"`
 		// 优惠类型
 		Type string `json:"type"`
-		// 优惠券面额	
+		// 优惠券面额
 		Amount uint `json:"amount"`
 		// 活动ID
 		StockID string `json:"stock_id"`
@@ -197,8 +197,8 @@ type QueryPayResultResponse struct {
 		OtherContribute uint `json:"other_contribute"`
 		// 优惠币种
 		Currency string `json:"currency"`
- 		// 单品列表
-		GoodsDetail []struct{
+		// 单品列表
+		GoodsDetail []struct {
 			// 商品编码
 			GoodsID string `json:"goods_id"`
 			// 商品数量
@@ -214,10 +214,10 @@ type QueryPayResultResponse struct {
 }
 
 // 微信支付订单号查询交易结果
-func (c MerchantApiClient) PayResultQueryByTransactionID(req QueryPayResultByTransactionIDRequest) (resp *QueryPayResultResponse, err error) {
+func (c MerchantApiClient) PayResultQueryByTransactionID(ctx context.Context, req QueryPayResultByTransactionIDRequest) (resp *QueryPayResultResponse, err error) {
 	url := fmt.Sprintf("/v3/pay/partner/transactions/id/%s", req.TransactionID)
 	query := fmt.Sprintf("sp_mchid=%s&sub_mchid=%s", req.SpMchID, req.SpMchID)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
 	if err != nil {
 		return
 	}
@@ -226,10 +226,10 @@ func (c MerchantApiClient) PayResultQueryByTransactionID(req QueryPayResultByTra
 }
 
 // 商户订单号查询交易结果
-func (c MerchantApiClient) PayResultQueryByOutRequestNo(req QueryPayResultByOutRequestNoRequest) (resp *QueryPayResultResponse, err error) {
+func (c MerchantApiClient) PayResultQueryByOutRequestNo(ctx context.Context, req QueryPayResultByOutRequestNoRequest) (resp *QueryPayResultResponse, err error) {
 	url := fmt.Sprintf("/v3/pay/partner/transactions/out-trade-no/%s", req.OutTradeNo)
 	query := fmt.Sprintf("sp_mchid=%s&sub_mchid=%s", req.SpMchID, req.SpMchID)
-	res, err := c.doRequestAndVerifySignature(context.Background(), "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
 	if err != nil {
 		return
 	}
