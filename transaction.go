@@ -268,14 +268,15 @@ func (c MerchantApiClient) PayResultQueryByOutRequestNo(ctx context.Context, req
 
 // 生成JSAPI调起起支付的request结构体
 func (c MerchantApiClient) GenJsApiPayRequest(req JsApiPayRequest) (resp *JsApiPayResponse, err error) {
-	paySign, err := createPaySign(c.apiPriKey, req.AppID, req.TimeStamp, RandStringBytesMaskImprSrc(10), req.Package)
+	nonce := RandStringBytesMaskImprSrc(10)
+	paySign, err := createPaySign(c.apiPriKey, req.AppID, req.TimeStamp, nonce, req.Package)
 	if err != nil {
 		return
 	}
 	resp = &JsApiPayResponse{
 		AppID:     req.AppID,
 		TimeStamp: req.TimeStamp,
-		Nonce:     req.Nonce,
+		Nonce:     nonce,
 		Package:   req.Package,
 		SignType:  "RSA",
 		PaySign:   paySign,
