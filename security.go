@@ -47,6 +47,11 @@ func CreateSignature(method string, url string, ts int, nounce string, body []by
 		sBeforeSign += string(body) + "\n"
 	}
 
+	signature, err = sha256WithRSA(sBeforeSign, priKey)
+	return
+}
+
+func sha256WithRSA(sBeforeSign string, priKey *rsa.PrivateKey) (signature string, err error) {
 	h := sha256.New()
 	_, _ = h.Write([]byte(sBeforeSign))
 	hashed := h.Sum(nil)
@@ -56,6 +61,13 @@ func CreateSignature(method string, url string, ts int, nounce string, body []by
 		return
 	}
 	signature = base64.StdEncoding.EncodeToString(sign)
+	return
+}
+
+func createPaySign(priKey *rsa.PrivateKey, args ...string) (paySign string, err error) {
+	sBeforeSign := strings.Join(args, "\n")
+	sBeforeSign += "\n"
+	paySign, err = sha256WithRSA(sBeforeSign, priKey)
 	return
 }
 
