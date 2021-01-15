@@ -283,3 +283,20 @@ func (c MerchantApiClient) GenJsApiPayRequest(req JsApiPayRequest) (resp *JsApiP
 	}
 	return
 }
+
+type CloseOrderRequest struct {
+	// 服务商户号
+	SpMchID string `json:"sp_mchid"`
+	// 二级商户号
+	SubMchID string `json:"sub_mchid"`
+	// 商户订单号
+	OutTradeNo string `json:"out_trade_no"`
+}
+
+// 关闭订单
+func (c MerchantApiClient) Close(ctx context.Context, req CloseOrderRequest) (err error) {
+	url := fmt.Sprintf("/v3/pay/partner/transactions/out-trade-no/%s/close", req.OutTradeNo)
+	body, _ := json.Marshal(&req)
+	_, err = c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
+	return
+}
