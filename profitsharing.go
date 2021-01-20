@@ -14,6 +14,8 @@ import (
 		查询分账回退结果
 		查询剩余待分账金额
 		分账完结
+		添加分账接收方
+		删除分账接收方
 */
 
 // 请求分账参数
@@ -292,6 +294,82 @@ type ProfitShareFinishResponse struct {
 // 完结分账API
 func (c MerchantApiClient) ProfitShareFinish(ctx context.Context, req ProfitShareFinishRequest) (resp *ProfitShareFinishResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/finish-order"
+	body, _ := json.Marshal(&req)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "query", body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(res, &resp)
+	return
+}
+
+// 添加分账接受方参数
+type ReceiversAddRequest struct {
+	// 电商平台的appid
+	AppID         string `json:"appid"`
+	// 接收方类型  MERCHANT_ID：商户 PERSONAL_OPENID：个人
+	Type          string `json:"type"`
+	// 接收方账号 类型是MERCHANT_ID时，是商户号 类型是PERSONAL_OPENID时，是个人openid
+	Account       string `json:"account"`
+	// 接收方账号 当type为MERCHANT_ID时，接收方名称是商户全称。
+	Name          string `json:"name,omitempty"`
+	// 分账接收方的名称，分账接收方类型是PERSONAL_OPENID时，是个人姓名的密文
+	EncryptedName string `json:"encrypted_name,omitempty"`
+	// 与分账方的关系类型
+	//	SUPPLIER：供应商
+	//	DISTRIBUTOR：分销商
+	//	SERVICE_PROVIDER：服务商
+	//	PLATFORM：平台
+	//	OTHERS：其他
+	RelationType  string `json:"relation_type"`
+}
+
+// 添加分账接受方返回
+type ReceiversAddResponse struct {
+	// 接收方类型  MERCHANT_ID：商户 PERSONAL_OPENID：个人
+	Type          string `json:"type"`
+	// 接收方账号 类型是MERCHANT_ID时，是商户号 类型是PERSONAL_OPENID时，是个人openid
+	Account       string `json:"account"`
+}
+
+// 添加分账接受方API
+func (c MerchantApiClient) ReceiversAdd(ctx context.Context, req ReceiversAddRequest) (resp *ReceiversAddResponse, err error) {
+	url := "/v3/ecommerce/profitsharing/receivers/add"
+	if req.Type == "PERSONAL_OPENID" {
+		// 分账接收方为个人，名字需要加密
+		pubKey := c.getPlatformPublicKey()
+		req.EncryptedName = encryptCiphertext(req.EncryptedName, pubKey)
+	}
+	body, _ := json.Marshal(&req)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "query", body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(res, &resp)
+	return
+}
+
+// 删除分账接受方请求
+type ReceiversDeleteRequest struct {
+	// 电商平台的appid
+	AppID string `json:"appid"`
+	// 接收方类型  MERCHANT_ID：商户 PERSONAL_OPENID：个人
+	Type string `json:"type"`
+	// 接收方账号 类型是MERCHANT_ID时，是商户号 类型是PERSONAL_OPENID时，是个人openid
+	Account string `json:"account"`
+}
+
+// 删除分账接受方返回
+type ReceiversDeleteResponse struct {
+	// 接收方类型  MERCHANT_ID：商户 PERSONAL_OPENID：个人
+	Type          string `json:"type"`
+	// 接收方账号 类型是MERCHANT_ID时，是商户号 类型是PERSONAL_OPENID时，是个人openid
+	Account       string `json:"account"`
+}
+
+// 删除分账接受方API
+func (c MerchantApiClient) ReceiversDelete(ctx context.Context, req ReceiversDeleteRequest) (resp *ReceiversDeleteResponse, err error) {
+	url := "/v3/ecommerce/profitsharing/receivers/delete"
 	body, _ := json.Marshal(&req)
 	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "query", body)
 	if err != nil {

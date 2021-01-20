@@ -30,6 +30,8 @@ ProfitReturnApply | 请求分账回退
 ProfitReturnQuery | 查询分账回退结果
 ProfitShareFinish | 完结分账
 ProfitShareUnSplitAmountQuery | 查询订单剩余待分金额
+ReceiversAdd | 添加分账接受方
+ReceiversDelete | 删除分账接受方
 ### 企业付款
 BatchTransfer | 直连商户批量付款到零钱
 ## 公共api
