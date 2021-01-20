@@ -259,7 +259,7 @@ type ProfitShareUnSplitAmountQueryResponse struct {
 // 查询订单剩余待分金额API
 func (c MerchantApiClient) ProfitShareUnSplitAmountQuery(ctx context.Context, req ProfitShareUnSplitAmountQueryRequest) (resp *ProfitShareUnSplitAmountQueryResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/profitsharing/orders/%s/amounts", req.TransactionID)
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, "query", nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, "", nil)
 	if err != nil {
 		return
 	}
@@ -295,7 +295,7 @@ type ProfitShareFinishResponse struct {
 func (c MerchantApiClient) ProfitShareFinish(ctx context.Context, req ProfitShareFinishRequest) (resp *ProfitShareFinishResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/finish-order"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "query", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
 	if err != nil {
 		return
 	}
@@ -335,13 +335,15 @@ type ReceiversAddResponse struct {
 // 添加分账接受方API
 func (c MerchantApiClient) ReceiversAdd(ctx context.Context, req ReceiversAddRequest) (resp *ReceiversAddResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/receivers/add"
-	if req.Type == "PERSONAL_OPENID" {
+	switch req.Type {
+	case "PERSONAL_OPENID":
 		// 分账接收方为个人，名字需要加密
 		pubKey := c.getPlatformPublicKey()
 		req.EncryptedName = encryptCiphertext(req.EncryptedName, pubKey)
 	}
+
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "query", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
 	if err != nil {
 		return
 	}
@@ -371,7 +373,7 @@ type ReceiversDeleteResponse struct {
 func (c MerchantApiClient) ReceiversDelete(ctx context.Context, req ReceiversDeleteRequest) (resp *ReceiversDeleteResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/receivers/delete"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "query", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
 	if err != nil {
 		return
 	}
