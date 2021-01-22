@@ -127,7 +127,7 @@ type JsApiPayResponse struct {
 func (c MerchantApiClient) JsApiPrepay(ctx context.Context, req JsApiPrepayRequest) (resp *PrepayPayResponse, err error) {
 	url := "/v3/pay/partner/transactions/jsapi"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, nil, body)
 	if err != nil {
 		return
 	}
@@ -245,8 +245,8 @@ type QueryPayResultResponse struct {
 // 微信支付订单号查询交易结果
 func (c MerchantApiClient) PayResultQueryByTransactionID(ctx context.Context, req QueryPayResultByTransactionIDRequest) (resp *QueryPayResultResponse, err error) {
 	url := fmt.Sprintf("/v3/pay/partner/transactions/id/%s", req.TransactionID)
-	query := fmt.Sprintf("sp_mchid=%s&sub_mchid=%s", req.SpMchID, req.SpMchID)
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
+	qm := map[string]string{"sp_mchid": req.SpMchID, "sub_mchid": req.SubMchID}
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, qm, nil)
 	if err != nil {
 		return
 	}
@@ -257,8 +257,8 @@ func (c MerchantApiClient) PayResultQueryByTransactionID(ctx context.Context, re
 // 商户订单号查询交易结果
 func (c MerchantApiClient) PayResultQueryByOutRequestNo(ctx context.Context, req QueryPayResultByOutRequestNoRequest) (resp *QueryPayResultResponse, err error) {
 	url := fmt.Sprintf("/v3/pay/partner/transactions/out-trade-no/%s", req.OutTradeNo)
-	query := fmt.Sprintf("sp_mchid=%s&sub_mchid=%s", req.SpMchID, req.SpMchID)
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
+	qm := map[string]string{"sp_mchid": req.SpMchID, "sub_mchid": req.SubMchID}
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, qm, nil)
 	if err != nil {
 		return
 	}
@@ -297,6 +297,6 @@ type CloseOrderRequest struct {
 func (c MerchantApiClient) Close(ctx context.Context, req CloseOrderRequest) (err error) {
 	url := fmt.Sprintf("/v3/pay/partner/transactions/out-trade-no/%s/close", req.OutTradeNo)
 	body, _ := json.Marshal(&req)
-	_, err = c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
+	_, err = c.doRequestAndVerifySignature(ctx, "POST", url, nil, body)
 	return
 }

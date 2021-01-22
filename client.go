@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -95,15 +96,20 @@ func (c MerchantApiClient) getPlatformPublicKey() (pubKey *rsa.PublicKey) {
 }
 
 // 普通http api请求，header中有Wechatpay-Serial
-func (c MerchantApiClient) doRequestWithWxSerial(ctx context.Context, method string, url string, query string, body []byte) (resp *http.Response, err error) {
+func (c MerchantApiClient) doRequestWithWxSerial(ctx context.Context, method string, rUrl string, qm map[string]string, body []byte) (resp *http.Response, err error) {
 	nonce := RandStringBytesMaskImprSrc(10)
 	ts := int(time.Now().Unix())
 	var requestUrl string
+	var qs []string
+	for k, v := range qm {
+		qs = append(qs, fmt.Sprintf("%s=%s", url.QueryEscape(k), url.QueryEscape(v)))
+	}
+	query := strings.Join(qs, "&")
 	switch query {
 	case "":
-		requestUrl = url
+		requestUrl = rUrl
 	default:
-		requestUrl = url + fmt.Sprintf("?%s", query)
+		requestUrl = rUrl + fmt.Sprintf("?%s", query)
 	}
 	// 验签需要带上query string
 	signature, _ := CreateSignature(method, requestUrl, ts, nonce, body, c.apiPriKey)
@@ -120,18 +126,24 @@ func (c MerchantApiClient) doRequestWithWxSerial(ctx context.Context, method str
 }
 
 // 普通http api请求，header中没有Wechatpay-Serial
-func (c BaseClient) doRequestWithOutWxSerial(ctx context.Context, method string, url string, query string, body []byte) (resp *http.Response, err error) {
+func (c BaseClient) doRequestWithOutWxSerial(ctx context.Context, method string, rUrl string, qm map[string]string, body []byte) (resp *http.Response, err error) {
 	nonce := RandStringBytesMaskImprSrc(10)
 	ts := int(time.Now().Unix())
-	signature, _ := CreateSignature(method, url, ts, nonce, body, c.apiPriKey)
+	signature, _ := CreateSignature(method, rUrl, ts, nonce, body, c.apiPriKey)
 
 	h := &http.Client{Timeout: c.timeout}
 	var requestUrl string
+	var qs []string
+	for k, v := range qm {
+		qs = append(qs, fmt.Sprintf("%s=%s", url.QueryEscape(k), url.QueryEscape(v)))
+	}
+	query := strings.Join(qs, "&")
+
 	switch query {
 	case "":
-		requestUrl = c.baseUrl + url
+		requestUrl = c.baseUrl + rUrl
 	default:
-		requestUrl = c.baseUrl + url + fmt.Sprintf("?%s", query)
+		requestUrl = c.baseUrl + rUrl + fmt.Sprintf("?%s", query)
 	}
 	req, _ := http.NewRequestWithContext(ctx, method, requestUrl, bytes.NewBuffer(body))
 	req.Header.Set("Authorization", c.formatAuthorizationHeader(nonce, ts, signature))
@@ -143,8 +155,8 @@ func (c BaseClient) doRequestWithOutWxSerial(ctx context.Context, method string,
 }
 
 // 没有验签功能的api请求
-func (c BaseClient) doRequestWithoutVerifySignature(ctx context.Context, method string, url string, query string, body []byte) (resp []byte, err error) {
-	rawResp, err := c.doRequestWithOutWxSerial(ctx, method, url, query, body)
+func (c BaseClient) doRequestWithoutVerifySignature(ctx context.Context, method string, url string, qm map[string]string, body []byte) (resp []byte, err error) {
+	rawResp, err := c.doRequestWithOutWxSerial(ctx, method, url, qm, body)
 	if err != nil {
 		return
 	}
@@ -161,8 +173,8 @@ func (c BaseClient) doRequestWithoutVerifySignature(ctx context.Context, method 
 }
 
 // 带验签功能的api请求
-func (c MerchantApiClient) doRequestAndVerifySignature(ctx context.Context, method string, url string, query string, body []byte) (resp []byte, err error) {
-	rawResp, err := c.doRequestWithWxSerial(ctx, method, url, query, body)
+func (c MerchantApiClient) doRequestAndVerifySignature(ctx context.Context, method string, url string, qm map[string]string, body []byte) (resp []byte, err error) {
+	rawResp, err := c.doRequestWithWxSerial(ctx, method, url, qm, body)
 	if err != nil {
 		return
 	}

@@ -22,7 +22,7 @@ type GetCertificatesResp struct {
 
 // 获取平台证书列表
 func (c BaseClient) GetCertificates() (resp *GetCertificatesResp, err error) {
-	res, err := c.doRequestWithoutVerifySignature(context.Background(), "GET", "/v3/certificates", "", nil)
+	res, err := c.doRequestWithoutVerifySignature(context.Background(), "GET", "/v3/certificates", nil, nil)
 	if err != nil {
 		return
 	}

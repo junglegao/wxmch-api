@@ -163,7 +163,7 @@ func (c MerchantApiClient) ApplymentSubmit(ctx context.Context, req SubmitApplym
 	}
 
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", "/v3/ecommerce/applyments/", "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", "/v3/ecommerce/applyments/", nil, body)
 	if err != nil {
 		return
 	}
@@ -249,7 +249,7 @@ func (r *ApplymentQueryResponse) desensitize(priKey *rsa.PrivateKey) (err error)
 // 通过申请单ID查询申请状态
 func (c MerchantApiClient) ApplymentQueryByID(ctx context.Context, req QueryApplymentByIDRequest) (resp *ApplymentQueryResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/applyments/%d", req.ApplymentID)
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, "", nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, nil, nil)
 	if err != nil {
 		return
 	}
@@ -267,7 +267,7 @@ func (c MerchantApiClient) ApplymentQueryByID(ctx context.Context, req QueryAppl
 // 通过业务申请编号查询申请状态
 func (c MerchantApiClient) ApplymentQueryByOutRequestNo(ctx context.Context, req QueryApplymentByOutRequestNoRequest) (resp *ApplymentQueryResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/applyments/out-request-no/%s", req.OutRequestNo)
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, "", nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, nil, nil)
 	if err != nil {
 		return
 	}
@@ -303,7 +303,7 @@ type ModifySettlementRequest struct {
 func (c MerchantApiClient) SettlementModify(ctx context.Context, req ModifySettlementRequest) (err error) {
 	url := fmt.Sprintf("/v3/apply4sub/sub_merchants/%s/modify-settlement", req.SubMchID)
 	body, _ := json.Marshal(&req)
-	_, err = c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
+	_, err = c.doRequestAndVerifySignature(ctx, "POST", url, nil, body)
 	if err != nil {
 		return
 	}
@@ -333,7 +333,7 @@ type QuerySettlementResponse struct {
 // 查询结算账户API
 func (c MerchantApiClient) SettlementQuery(ctx context.Context, req QuerySettlementRequest) (resp *QuerySettlementResponse, err error) {
 	url := fmt.Sprintf("/v3/apply4sub/sub_merchants/%s/settlement", req.SubMchID)
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, "", nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, nil, nil)
 	if err != nil {
 		return
 	}

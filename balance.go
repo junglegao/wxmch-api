@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 )
 
 // 二级商户账户实时余额查询
@@ -29,8 +28,8 @@ type SubMchBalanceQueryResponse struct {
 // 二级商户账户实时余额查询
 func (c MerchantApiClient) SubMchBalanceQuery(ctx context.Context, req SubMchBalanceQueryRequest) (resp *SubMchBalanceQueryResponse, err error) {
 	rUrl := fmt.Sprintf("/v3/ecommerce/fund/balance/%s", req.SubMchID)
-	query := fmt.Sprintf("account_type=%s", url.QueryEscape(req.AccountType))
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", rUrl, query, nil)
+	qm := map[string]string {"account_type": req.AccountType}
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", rUrl, qm, nil)
 	if err != nil {
 		return
 	}
@@ -57,8 +56,8 @@ type SubMchEndDayBalanceQueryResponse struct {
 // 二级商户账户日终余额
 func (c MerchantApiClient) SubMchEndDayBalanceQuery(ctx context.Context, req SubMchEndDayBalanceQueryRequest) (resp *SubMchEndDayBalanceQueryResponse, err error) {
 	rUrl := fmt.Sprintf("/v3/ecommerce/fund/enddaybalance/%s", req.SubMchID)
-	query := fmt.Sprintf("date=%s", url.QueryEscape(req.Date))
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", rUrl, query, nil)
+	qm := map[string]string{"date": req.Date}
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", rUrl, qm, nil)
 	if err != nil {
 		return
 	}
@@ -83,7 +82,7 @@ type PlatformBalanceQueryResponse struct {
 // 电商平台账户实时余额查询
 func (c MerchantApiClient) PlatformBalanceQuery(ctx context.Context, req PlatformBalanceQueryRequest) (resp *PlatformBalanceQueryResponse, err error) {
 	rUrl := fmt.Sprintf("/v3/merchant/fund/balance/%s", req.AccountType)
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", rUrl, "", nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", rUrl, nil, nil)
 	if err != nil {
 		return
 	}
@@ -110,8 +109,8 @@ type PlatformEndDayBalanceQueryResponse struct {
 // 电商平台账户日终余额查询
 func (c MerchantApiClient) PlatformEndDayBalanceQuery(ctx context.Context, req PlatformEndDayBalanceQueryRequest) (resp *PlatformEndDayBalanceQueryResponse, err error) {
 	rUrl := fmt.Sprintf("/v3/merchant/fund/dayendbalance/%s", req.AccountType)
-	query := fmt.Sprintf("date=%s", url.QueryEscape(req.Date))
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", rUrl, query, nil)
+	qm := map[string]string{"date": req.Date}
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", rUrl, qm, nil)
 	if err != nil {
 		return
 	}

@@ -62,7 +62,7 @@ type ProfitShareApplyResponse struct {
 func (c MerchantApiClient) ProfitShareApply(ctx context.Context, req ProfitShareApplyRequest) (resp *ProfitShareApplyResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/orders"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, nil, body)
 	if err != nil {
 		return
 	}
@@ -122,8 +122,12 @@ type ReceiverInProfitShareResponse struct {
 // 查询分账结果API
 func (c MerchantApiClient) ProfitShareQuery(ctx context.Context, req ProfitShareQueryRequest) (resp *ProfitShareQueryResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/orders"
-	query := fmt.Sprintf("sub_mchid=%s&transaction_id=%s&out_order_no=%s", req.SubMchID, req.TransactionID, req.OutOrderNo)
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
+	qm := map[string]string{
+		"sub_mchid":      req.SubMchID,
+		"transaction_id": req.TransactionID,
+		"out_order_no":   req.OutOrderNo,
+	}
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, qm, nil)
 	if err != nil {
 		return
 	}
@@ -177,7 +181,7 @@ type ProfitReturnApplyResponse struct {
 func (c MerchantApiClient) ProfitReturnApply(ctx context.Context, req ProfitReturnApplyRequest) (resp *ProfitReturnApplyResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/returnorders"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, nil, body)
 	if err != nil {
 		return
 	}
@@ -223,18 +227,21 @@ type ProfitReturnQueryResponse struct {
 // 查询分账回退结果API
 func (c MerchantApiClient) ProfitReturnQuery(ctx context.Context, req ProfitReturnQueryRequest) (resp ProfitReturnQueryResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/returnorders"
-	query := fmt.Sprintf("sub_mchid=%s&out_return_no=%s", req.SubMchID, req.OutReturnNo)
+	qm := map[string]string{
+		"sub_mchid":     req.SubMchID,
+		"out_return_no": req.OutReturnNo,
+	}
 	if req.OutOrderNo == "" && req.OrderID == "" {
 		err = fmt.Errorf("out_order_no和order_id不能同时为空")
 		return
 	}
 	if req.OutOrderNo != "" {
-		query += fmt.Sprintf("&out_order_no=%s", req.OutOrderNo)
+		qm["out_order_no"] = req.OutOrderNo
 	}
 	if req.OrderID != "" {
-		query += fmt.Sprintf("&order_id=%s", req.OrderID)
+		qm["order_id"] = req.OrderID
 	}
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, qm, nil)
 	if err != nil {
 		return
 	}
@@ -259,7 +266,7 @@ type ProfitShareUnSplitAmountQueryResponse struct {
 // 查询订单剩余待分金额API
 func (c MerchantApiClient) ProfitShareUnSplitAmountQuery(ctx context.Context, req ProfitShareUnSplitAmountQueryRequest) (resp *ProfitShareUnSplitAmountQueryResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/profitsharing/orders/%s/amounts", req.TransactionID)
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, "", nil)
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, nil, nil)
 	if err != nil {
 		return
 	}
@@ -295,7 +302,7 @@ type ProfitShareFinishResponse struct {
 func (c MerchantApiClient) ProfitShareFinish(ctx context.Context, req ProfitShareFinishRequest) (resp *ProfitShareFinishResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/finish-order"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, nil, body)
 	if err != nil {
 		return
 	}
@@ -343,7 +350,7 @@ func (c MerchantApiClient) ReceiversAdd(ctx context.Context, req ReceiversAddReq
 	}
 
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, nil, body)
 	if err != nil {
 		return
 	}
@@ -373,7 +380,7 @@ type ReceiversDeleteResponse struct {
 func (c MerchantApiClient) ReceiversDelete(ctx context.Context, req ReceiversDeleteRequest) (resp *ReceiversDeleteResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/receivers/delete"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, nil, body)
 	if err != nil {
 		return
 	}

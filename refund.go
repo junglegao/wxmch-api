@@ -76,7 +76,7 @@ type RefundResponse struct {
 func (c MerchantApiClient) RefundApply(ctx context.Context, req RefundRequest) (resp *RefundResponse, err error) {
 	url := "/v3/ecommerce/refunds/apply"
 	body, _ := json.Marshal(&req)
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, nil, body)
 	if err != nil {
 		return
 	}
@@ -146,8 +146,8 @@ type QueryRefundResponse struct {
 // 通过微信支付退款单号查询退款
 func (c MerchantApiClient) QueryRefundByID(ctx context.Context, req QueryRefundByIDRequest) (resp *QueryRefundResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/refunds/id/%s", req.RefundID)
-	query := fmt.Sprintf("sub_mchid=%s", req.SubMchID)
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
+	qm := map[string]string{"sub_mchid": req.SubMchID}
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, qm, nil)
 	if err != nil {
 		return
 	}
@@ -158,8 +158,8 @@ func (c MerchantApiClient) QueryRefundByID(ctx context.Context, req QueryRefundB
 // 通过商户退款单号查询退款
 func (c MerchantApiClient) QueryRefundByOutRefundNo(ctx context.Context, req QueryRefundByOutRefundNoRequest) (resp *QueryRefundResponse, err error) {
 	url := fmt.Sprintf("/v3/ecommerce/refunds/out-refund-no/%s", req.OutRefundNo)
-	query := fmt.Sprintf("sub_mchid=%s", req.SubMchID)
-	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, query, nil)
+	qm := map[string]string{"sub_mchid": req.SubMchID}
+	res, err := c.doRequestAndVerifySignature(ctx, "GET", url, qm, nil)
 	if err != nil {
 		return
 	}

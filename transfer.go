@@ -60,7 +60,7 @@ func (c MerchantApiClient) BatchTransfer(ctx context.Context, req BatchTransferR
 	}
 	body, _ := json.Marshal(&req)
 
-	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, "", body)
+	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, nil, body)
 	if err != nil {
 		return
 	}
