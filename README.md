@@ -33,7 +33,16 @@ ProfitShareUnSplitAmountQuery | 查询订单剩余待分金额
 ReceiversAdd | 添加分账接受方
 ReceiversDelete | 删除分账接受方
 ### 企业付款
+| 方法名 | 备注 |
+| --- | --- |
 BatchTransfer | 直连商户批量付款到零钱
+### 余额查询
+| 方法名 | 备注 |
+| --- | --- |
+PlatformBalanceQuery | 电商平台账户实时余额查询
+PlatformEndDayBalanceQuery | 电商平台账户日终余额查询
+SubMchBalanceQuery | 二级商户账户实时余额查询
+SubMchEndDayBalanceQuery | 二级商户账户日终余额 
 ## 公共api
 | 方法名 | 备注 |
 | --- | --- |
