@@ -306,13 +306,13 @@ func (c MerchantApiClient) ProfitShareFinish(ctx context.Context, req ProfitShar
 // 添加分账接受方参数
 type ReceiversAddRequest struct {
 	// 电商平台的appid
-	AppID         string `json:"appid"`
+	AppID string `json:"appid"`
 	// 接收方类型  MERCHANT_ID：商户 PERSONAL_OPENID：个人
-	Type          string `json:"type"`
+	Type string `json:"type"`
 	// 接收方账号 类型是MERCHANT_ID时，是商户号 类型是PERSONAL_OPENID时，是个人openid
-	Account       string `json:"account"`
+	Account string `json:"account"`
 	// 接收方账号 当type为MERCHANT_ID时，接收方名称是商户全称。
-	Name          string `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 	// 分账接收方的名称，分账接收方类型是PERSONAL_OPENID时，是个人姓名的密文
 	EncryptedName string `json:"encrypted_name,omitempty"`
 	// 与分账方的关系类型
@@ -321,15 +321,15 @@ type ReceiversAddRequest struct {
 	//	SERVICE_PROVIDER：服务商
 	//	PLATFORM：平台
 	//	OTHERS：其他
-	RelationType  string `json:"relation_type"`
+	RelationType string `json:"relation_type"`
 }
 
 // 添加分账接受方返回
 type ReceiversAddResponse struct {
 	// 接收方类型  MERCHANT_ID：商户 PERSONAL_OPENID：个人
-	Type          string `json:"type"`
+	Type string `json:"type"`
 	// 接收方账号 类型是MERCHANT_ID时，是商户号 类型是PERSONAL_OPENID时，是个人openid
-	Account       string `json:"account"`
+	Account string `json:"account"`
 }
 
 // 添加分账接受方API
@@ -364,9 +364,9 @@ type ReceiversDeleteRequest struct {
 // 删除分账接受方返回
 type ReceiversDeleteResponse struct {
 	// 接收方类型  MERCHANT_ID：商户 PERSONAL_OPENID：个人
-	Type          string `json:"type"`
+	Type string `json:"type"`
 	// 接收方账号 类型是MERCHANT_ID时，是商户号 类型是PERSONAL_OPENID时，是个人openid
-	Account       string `json:"account"`
+	Account string `json:"account"`
 }
 
 // 删除分账接受方API

@@ -98,16 +98,17 @@ func (c MerchantApiClient) getPlatformPublicKey() (pubKey *rsa.PublicKey) {
 func (c MerchantApiClient) doRequestWithWxSerial(ctx context.Context, method string, url string, query string, body []byte) (resp *http.Response, err error) {
 	nonce := RandStringBytesMaskImprSrc(10)
 	ts := int(time.Now().Unix())
-	signature, _ := CreateSignature(method, url, ts, nonce, body, c.apiPriKey)
-
-	h := &http.Client{Timeout: c.timeout}
 	var requestUrl string
 	switch query {
 	case "":
-		requestUrl = c.baseUrl + url
+		requestUrl = url
 	default:
-		requestUrl = c.baseUrl + url + fmt.Sprintf("?%s", query)
+		requestUrl = url + fmt.Sprintf("?%s", query)
 	}
+	// 验签需要带上query string
+	signature, _ := CreateSignature(method, requestUrl, ts, nonce, body, c.apiPriKey)
+	requestUrl = c.baseUrl + requestUrl
+	h := &http.Client{Timeout: c.timeout}
 	req, _ := http.NewRequestWithContext(ctx, method, requestUrl, bytes.NewBuffer(body))
 	req.Header.Set("Authorization", c.formatAuthorizationHeader(nonce, ts, signature))
 	req.Header.Set("Accept", "application/json")
