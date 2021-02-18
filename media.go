@@ -48,7 +48,7 @@ func (c MerchantApiClient) MediaUpload(ctx context.Context, req MediaUploadReque
 	var ctype ContentType
 	var suffix ImageFileSuffix
 	switch format {
-	case "jpg":
+	case "jpeg", "jpg":
 		ctype = ContentTypeJPG
 		suffix = JPGSuffix
 	case "bmp":
