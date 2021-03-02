@@ -53,7 +53,7 @@ type JsApiPrepayRequest struct {
 		SubOpenID string `json:"sub_openid"`
 	} `json:"payer"`
 	// 优惠功能
-	Detail struct {
+	Detail *struct {
 		// 订单原价
 		CostPrice uint `json:"cost_price"`
 		// 商品小票ID
@@ -70,10 +70,10 @@ type JsApiPrepayRequest struct {
 			Quantity uint `json:"quantity"`
 			// 商品单价
 			UnitPrice uint `json:"unit_price"`
-		} `json:"goods_detail"`
-	} `json:"detail"`
+		} `json:"goods_detail,omitempty"`
+	} `json:"detail,omitempty"`
 	// 场景信息
-	SceneInfo struct {
+	SceneInfo *struct {
 		// 用户终端IP
 		PayerClientIP string `json:"payer_client_ip"`
 		// 商户端设备号
@@ -89,7 +89,7 @@ type JsApiPrepayRequest struct {
 			// 详细地址
 			Address string `json:"address"`
 		} `json:"store_info"`
-	} `json:"scene_info"`
+	} `json:"scene_info,omitempty"`
 }
 
 type PrepayPayResponse struct {
