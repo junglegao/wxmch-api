@@ -19,9 +19,9 @@ type RefundRequest struct {
 	// 二级商户APPID
 	SubAppID string `json:"sub_appid,omitempty"`
 	// 微信订单号
-	TransactionID string `json:"transaction_id"`
+	TransactionID string `json:"transaction_id,omitempty"`
 	// 商户订单号
-	OutTradeNo string `json:"out_trade_no"`
+	OutTradeNo string `json:"out_trade_no,omitempty"`
 	// 商户退款单号
 	OutRefundNo string `json:"out_refund_no"`
 	// 退款原因
