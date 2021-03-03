@@ -58,7 +58,7 @@ type CipherBlockResource struct {
 func (c MerchantApiClient) GetResourcePlainText(r CipherBlockResource) (plainText []byte, err error) {
 	switch r.Algorithm {
 	case "AEAD_AES_256_GCM":
-		plainText = decryptCiphertextWithGCM(r.AssociatedData, r.Nonce, r.Ciphertext, c.apiCert)
+		plainText = decryptCiphertextWithGCM(r.AssociatedData, r.Nonce, r.Ciphertext, c.apiSecret)
 	default:
 		err = fmt.Errorf("algorithm:%s not supported", r.Algorithm)
 		return
