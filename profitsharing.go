@@ -44,7 +44,7 @@ type ReceiverInProfitShareRequest struct {
 	// 分账/回退描述
 	Description string `json:"description"`
 	// 分账接受方姓名
-	ReceiverName string `json:"receiver_name"`
+	ReceiverName string `json:"receiver_name,omitempty"`
 }
 
 type ProfitShareApplyResponse struct {
@@ -61,6 +61,14 @@ type ProfitShareApplyResponse struct {
 // 请求分账API
 func (c MerchantApiClient) ProfitShareApply(ctx context.Context, req ProfitShareApplyRequest) (resp *ProfitShareApplyResponse, err error) {
 	url := "/v3/ecommerce/profitsharing/orders"
+	rcvs := req.Receivers
+	pubKey := c.getPlatformPublicKey()
+	for i := range rcvs {
+		// 姓名需要加密
+		if rcvs[i].ReceiverName != "" {
+			rcvs[i].ReceiverName = encryptCiphertext(rcvs[i].ReceiverName, pubKey)
+		}
+	}
 	body, _ := json.Marshal(&req)
 	res, err := c.doRequestAndVerifySignature(ctx, "POST", url, nil, body)
 	if err != nil {
